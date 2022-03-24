@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MarketingBox.Redistribution.Service.Domain.Models\MarketingBox.Redistribution.Service.Domain.Models.csproj" />
+    <ProjectReference Include="..\..\src\MarketingBox.Redistribution.Service\MarketingBox.Redistribution.Service.csproj" />
   </ItemGroup>
 
 </Project>

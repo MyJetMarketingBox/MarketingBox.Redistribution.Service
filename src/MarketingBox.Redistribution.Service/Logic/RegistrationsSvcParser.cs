@@ -8,7 +8,7 @@ namespace MarketingBox.Redistribution.Service.Logic
 {
     public class RegistrationsSvcParser
     {
-        public async Task<List<RegistrationFromFile>> GetRegistrationsFromFile(byte[] file)
+        public static async Task<List<RegistrationFromFile>> GetRegistrationsFromFile(byte[] file)
         {
             var registrationsSvc = new List<RegistrationFromFile>();
             

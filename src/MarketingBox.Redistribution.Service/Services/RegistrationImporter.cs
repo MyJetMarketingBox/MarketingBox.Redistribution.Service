@@ -15,13 +15,10 @@ namespace MarketingBox.Redistribution.Service.Services
     public class RegistrationImporter: IRegistrationImporter
     {
         private readonly DatabaseContextFactory _databaseContextFactory;
-        private readonly RegistrationsSvcParser _registrationsSvcParser;
 
-        public RegistrationImporter(DatabaseContextFactory databaseContextFactory, 
-            RegistrationsSvcParser registrationsSvcParser)
+        public RegistrationImporter(DatabaseContextFactory databaseContextFactory)
         {
             _databaseContextFactory = databaseContextFactory;
-            _registrationsSvcParser = registrationsSvcParser;
         }
 
         public async Task<Response<ImportResponse>> ImportAsync(ImportRequest request)
@@ -106,7 +103,7 @@ namespace MarketingBox.Redistribution.Service.Services
                     };
                 
                 var registrationsFromSvc =
-                    await _registrationsSvcParser.GetRegistrationsFromFile(registrationsFile.File);
+                    await RegistrationsSvcParser.GetRegistrationsFromFile(registrationsFile.File);
                 
                 return new Response<List<RegistrationFromFile>>()
                 {

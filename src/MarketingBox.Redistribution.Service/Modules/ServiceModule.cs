@@ -9,7 +9,6 @@ namespace MarketingBox.Redistribution.Service.Modules
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<DatabaseContextFactory>().AsSelf().SingleInstance();
-            builder.RegisterType<RegistrationsSvcParser>().AsSelf().SingleInstance();
         }
     }
 }
