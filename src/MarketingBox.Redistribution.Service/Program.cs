@@ -9,13 +9,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
 using MySettingsReader;
-using Service.MarketingBox.Email.Service;
 
 namespace MarketingBox.Redistribution.Service
 {
     public class Program
     {
-        public const string SettingsFileName = ".marketingboxemailservice";
+        public const string SettingsFileName = ".marketingboxredistributionservice";
 
         public static SettingsModel Settings { get; private set; }
 

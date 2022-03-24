@@ -13,7 +13,6 @@ using MyJetWallet.Sdk.GrpcSchema;
 using MyJetWallet.Sdk.Postgres;
 using MyJetWallet.Sdk.Service;
 using Prometheus;
-using Service.MarketingBox.Email.Service;
 using SimpleTrading.ServiceStatusReporterConnector;
 
 namespace MarketingBox.Redistribution.Service

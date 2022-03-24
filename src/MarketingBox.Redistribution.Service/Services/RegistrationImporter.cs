@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using MarketingBox.Redistribution.Service.Domain.Models;
 using MarketingBox.Redistribution.Service.Grpc;
@@ -32,7 +33,8 @@ namespace MarketingBox.Redistribution.Service.Services
                     File = request.RegistrationsFile
                 };
                 await using var ctx = _databaseContextFactory.Create();
-                ctx.RegistrationsFileCollection.Upsert(registrationsFile);
+                ctx.RegistrationsFileCollection.Add(registrationsFile);
+                await ctx.SaveChangesAsync();
 
                 return new Response<ImportResponse>()
                 {
