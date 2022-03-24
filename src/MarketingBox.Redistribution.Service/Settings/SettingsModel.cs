@@ -14,5 +14,7 @@ namespace MarketingBox.Redistribution.Service.Settings
         [YamlProperty("RedistributionService.ElkLogs")]
         public LogElkSettings ElkLogs { get; set; }
 
+        [YamlProperty("RedistributionService.PostgresConnectionString")]
+        public string PostgresConnectionString { get; set; }
     }
 }

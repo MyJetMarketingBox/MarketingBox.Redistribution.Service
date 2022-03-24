@@ -15,6 +15,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
     <PackageReference Include="MyJetWallet.Sdk.GrpcMetrics" Version="2.0.4" />
     <PackageReference Include="MyJetWallet.Sdk.GrpcSchema" Version="1.0.6" />
+    <PackageReference Include="MyJetWallet.Sdk.Postgres" Version="2.2.0" />
     <PackageReference Include="MyJetWallet.Sdk.Service" Version="2.1.6" />
     <PackageReference Include="MyJetWallet.Sdk.ServiceBus" Version="2.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
@@ -29,6 +30,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MarketingBox.Redistribution.Service.Domain\MarketingBox.Redistribution.Service.Domain.csproj" />
     <ProjectReference Include="..\MarketingBox.Redistribution.Service.Grpc\MarketingBox.Redistribution.Service.Grpc.csproj" />
+    <ProjectReference Include="..\MarketingBox.Redistribution.Service.Postgres\MarketingBox.Redistribution.Service.Postgres.csproj" />
   </ItemGroup>
 
   <ItemGroup>

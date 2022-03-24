@@ -1,4 +1,6 @@
 ﻿using Autofac;
+using MarketingBox.Redistribution.Service.Logic;
+using MarketingBox.Redistribution.Service.Postgres;
 
 namespace MarketingBox.Redistribution.Service.Modules
 {
@@ -6,6 +8,8 @@ namespace MarketingBox.Redistribution.Service.Modules
     {
         protected override void Load(ContainerBuilder builder)
         {
+            builder.RegisterType<DatabaseContextFactory>().AsSelf().SingleInstance();
+            builder.RegisterType<RegistrationsSvcParser>().AsSelf().SingleInstance();
         }
     }
 }
