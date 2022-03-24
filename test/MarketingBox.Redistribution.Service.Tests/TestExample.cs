@@ -21,7 +21,7 @@ namespace MarketingBox.Redistribution.Service.Tests
         {
             var registrationsSvc = new List<RegistrationFromFile>();
             
-            var bytes = await File.ReadAllBytesAsync("/Users/geomatika/Downloads/testSvc.csv");
+            var bytes = await File.ReadAllBytesAsync($"{Directory.GetParent(Environment.CurrentDirectory)?.Parent!.Parent.FullName}/SvcSamples/RegistrationsSvc.csv");
             
             await using var stream = new MemoryStream(bytes);
             using var reader = new StreamReader(stream);
