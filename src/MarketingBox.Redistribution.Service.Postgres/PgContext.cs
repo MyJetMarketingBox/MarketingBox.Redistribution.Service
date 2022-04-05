@@ -9,8 +9,10 @@ namespace MarketingBox.Redistribution.Service.Postgres
         public const string Schema = "redistribution-service";
         
         private const string RegistrationsFileTableName = "registrations-file";
+        private const string RedistributionTableName = "redistribution";
         
         public DbSet<RegistrationsFile> RegistrationsFileCollection { get; set; }
+        public DbSet<Domain.Models.Redistribution> RedistributionCollection { get; set; }
 
         public PgContext(DbContextOptions options) : base(options)
         {
@@ -21,8 +23,19 @@ namespace MarketingBox.Redistribution.Service.Postgres
             modelBuilder.HasDefaultSchema(Schema);
             
             SetCustomStrategyTable(modelBuilder);
+            SetRedistributionTable(modelBuilder);
             
             base.OnModelCreating(modelBuilder);
+        }
+
+        private void SetRedistributionTable(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Domain.Models.Redistribution>().ToTable(RedistributionTableName);
+
+            modelBuilder.Entity<Domain.Models.Redistribution>().Property(e => e.Id).UseIdentityColumn();
+            modelBuilder.Entity<Domain.Models.Redistribution>().HasKey(e => e.Id);
+            
+            modelBuilder.Entity<Domain.Models.Redistribution>().HasIndex(e => e.CreatedBy);
         }
 
         private void SetCustomStrategyTable(ModelBuilder modelBuilder)

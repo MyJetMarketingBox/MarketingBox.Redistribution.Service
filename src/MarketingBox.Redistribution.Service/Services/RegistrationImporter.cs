@@ -10,22 +10,29 @@ using MarketingBox.Redistribution.Service.Postgres;
 using MarketingBox.Sdk.Common.Models;
 using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace MarketingBox.Redistribution.Service.Services
 {
     public class RegistrationImporter: IRegistrationImporter
     {
         private readonly DatabaseContextFactory _databaseContextFactory;
+        private readonly ILogger<RegistrationImporter> _logger;
 
-        public RegistrationImporter(DatabaseContextFactory databaseContextFactory)
+        public RegistrationImporter(DatabaseContextFactory databaseContextFactory, 
+            ILogger<RegistrationImporter> logger)
         {
             _databaseContextFactory = databaseContextFactory;
+            _logger = logger;
         }
 
         public async Task<Response<ImportResponse>> ImportAsync(ImportRequest request)
         {
             try
             {
+                _logger.LogInformation($"RegistrationImporter.ImportAsync receive request {JsonConvert.SerializeObject(request)}");
+                
                 var registrationsFile = new RegistrationsFile()
                 {
                     CreatedAt = DateTime.UtcNow,
@@ -47,6 +54,7 @@ namespace MarketingBox.Redistribution.Service.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, ex.Message);
                 return new Response<ImportResponse>()
                 {
                     Status = ResponseStatus.InternalError,
@@ -76,6 +84,7 @@ namespace MarketingBox.Redistribution.Service.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, ex.Message);
                 return new Response<GetRegistrationFilesResponse>()
                 {
                     Status = ResponseStatus.InternalError,
@@ -91,6 +100,7 @@ namespace MarketingBox.Redistribution.Service.Services
         {
             try
             {
+                
                 await using var ctx = _databaseContextFactory.Create();
                 var registrationsFile = await ctx.RegistrationsFileCollection.FirstOrDefaultAsync(e => e.Id == request.FileId);
 
@@ -115,6 +125,7 @@ namespace MarketingBox.Redistribution.Service.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, ex.Message);
                 return new Response<List<RegistrationFromFile>>()
                 {
                     Status = ResponseStatus.InternalError,

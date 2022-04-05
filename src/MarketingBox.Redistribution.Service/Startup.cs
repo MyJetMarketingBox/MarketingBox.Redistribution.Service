@@ -50,6 +50,7 @@ namespace MarketingBox.Redistribution.Service
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapGrpcSchema<RegistrationImporter, IRegistrationImporter>();
+                endpoints.MapGrpcSchema<RedistributionService, IRedistributionService>();
 
                 endpoints.MapGrpcSchemaRegistry();
 

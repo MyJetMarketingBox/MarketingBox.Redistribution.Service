@@ -12,6 +12,7 @@ namespace MarketingBox.Redistribution.Service.Client
             var factory = new ServiceClientFactory(grpcServiceUrl);
 
             builder.RegisterInstance(factory.GetRegistrationImporterService()).As<IRegistrationImporter>().SingleInstance();
+            builder.RegisterInstance(factory.GetRedistributionServiceService()).As<IRedistributionService>().SingleInstance();
         }
     }
 }
