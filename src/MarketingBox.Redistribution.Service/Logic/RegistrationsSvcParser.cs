@@ -17,7 +17,7 @@ namespace MarketingBox.Redistribution.Service.Logic
             using var parser = new TextFieldParser(reader);
             
             parser.TextFieldType = FieldType.Delimited;
-            parser.SetDelimiters(",");
+            parser.SetDelimiters(",", ";", "\t");
             while (!parser.EndOfData)
             {
                 var fields = parser.ReadFields();
