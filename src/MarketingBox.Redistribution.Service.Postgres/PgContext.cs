@@ -10,9 +10,11 @@ namespace MarketingBox.Redistribution.Service.Postgres
         
         private const string RegistrationsFileTableName = "registrations-file";
         private const string RedistributionTableName = "redistribution";
+        private const string RedistributionLogTableName = "redistribution-log";
         
         public DbSet<RegistrationsFile> RegistrationsFileCollection { get; set; }
-        public DbSet<Domain.Models.Redistribution> RedistributionCollection { get; set; }
+        public DbSet<RedistributionEntity> RedistributionCollection { get; set; }
+        public DbSet<RedistributionLog> RedistributionLogCollection { get; set; }
 
         public PgContext(DbContextOptions options) : base(options)
         {
@@ -24,18 +26,31 @@ namespace MarketingBox.Redistribution.Service.Postgres
             
             SetCustomStrategyTable(modelBuilder);
             SetRedistributionTable(modelBuilder);
+            SetRedistributionLogTable(modelBuilder);
             
             base.OnModelCreating(modelBuilder);
         }
 
+        private void SetRedistributionLogTable(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<RedistributionLog>().ToTable(RedistributionLogTableName);
+
+            modelBuilder.Entity<RedistributionLog>().Property(e => e.Id).UseIdentityColumn();
+            modelBuilder.Entity<RedistributionLog>().HasKey(e => e.Id);
+            
+            modelBuilder.Entity<RedistributionLog>().HasIndex(e => e.RedistributionId);
+            modelBuilder.Entity<RedistributionLog>().HasIndex(e => e.SendDate);
+            modelBuilder.Entity<RedistributionLog>().HasIndex(e => e.Result);
+        }
+
         private void SetRedistributionTable(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Domain.Models.Redistribution>().ToTable(RedistributionTableName);
+            modelBuilder.Entity<RedistributionEntity>().ToTable(RedistributionTableName);
 
-            modelBuilder.Entity<Domain.Models.Redistribution>().Property(e => e.Id).UseIdentityColumn();
-            modelBuilder.Entity<Domain.Models.Redistribution>().HasKey(e => e.Id);
+            modelBuilder.Entity<RedistributionEntity>().Property(e => e.Id).UseIdentityColumn();
+            modelBuilder.Entity<RedistributionEntity>().HasKey(e => e.Id);
             
-            modelBuilder.Entity<Domain.Models.Redistribution>().HasIndex(e => e.CreatedBy);
+            modelBuilder.Entity<RedistributionEntity>().HasIndex(e => e.CreatedBy);
         }
 
         private void SetCustomStrategyTable(ModelBuilder modelBuilder)

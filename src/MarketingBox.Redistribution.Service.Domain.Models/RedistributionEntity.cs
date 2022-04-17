@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace MarketingBox.Redistribution.Service.Domain.Models;
 
 [DataContract]
-public class Redistribution
+public class RedistributionEntity
 {
     [DataMember(Order = 1)] public long Id { get; set; }
     [DataMember(Order = 2)] public long CreatedBy { get; set; }
@@ -16,6 +16,6 @@ public class Redistribution
     [DataMember(Order = 7)] public RedistributionState Status { get; set; }
     [DataMember(Order = 8)] public int PortionLimit { get; set; }
     [DataMember(Order = 9)] public int DayLimit { get; set; }
-    [DataMember(Order = 10)] public bool RegistrationsFilter { get; set; }
-    [DataMember(Order = 11)] public List<long> RegistrationFiles { get; set; }
+    [DataMember(Order = 10)] public List<long>? RegistrationsIds { get; set; }
+    [DataMember(Order = 11)] public List<long>? FilesIds { get; set; }
 }

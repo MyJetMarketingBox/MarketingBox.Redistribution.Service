@@ -24,7 +24,7 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("MarketingBox.Redistribution.Service.Domain.Models.Redistribution", b =>
+            modelBuilder.Entity("MarketingBox.Redistribution.Service.Domain.Models.RedistributionEntity", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -47,17 +47,17 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
                     b.Property<int>("DayLimit")
                         .HasColumnType("integer");
 
+                    b.Property<List<long>>("FilesIds")
+                        .HasColumnType("bigint[]");
+
                     b.Property<int>("Frequency")
                         .HasColumnType("integer");
 
                     b.Property<int>("PortionLimit")
                         .HasColumnType("integer");
 
-                    b.Property<List<long>>("RegistrationFiles")
+                    b.Property<List<long>>("RegistrationsIds")
                         .HasColumnType("bigint[]");
-
-                    b.Property<bool>("RegistrationsFilter")
-                        .HasColumnType("boolean");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -67,6 +67,43 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
                     b.HasIndex("CreatedBy");
 
                     b.ToTable("redistribution", "redistribution-service");
+                });
+
+            modelBuilder.Entity("MarketingBox.Redistribution.Service.Domain.Models.RedistributionLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("EntityId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("text");
+
+                    b.Property<long>("RedistributionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Result")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SendDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RedistributionId");
+
+                    b.HasIndex("Result");
+
+                    b.HasIndex("SendDate");
+
+                    b.ToTable("redistribution-log", "redistribution-service");
                 });
 
             modelBuilder.Entity("MarketingBox.Redistribution.Service.Domain.Models.RegistrationsFile", b =>
@@ -84,6 +121,7 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<byte[]>("File")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.HasKey("Id");

@@ -10,11 +10,11 @@ namespace MarketingBox.Redistribution.Service.Grpc;
 public interface IRedistributionService
 {
     [OperationContract]
-    Task CreateRedistributionAsync(Domain.Models.Redistribution entity);
+    Task CreateRedistributionAsync(Domain.Models.RedistributionEntity entity);
     
     [OperationContract]
-    Task<Response<Domain.Models.Redistribution>> UpdateRedistributionStateAsync(UpdateRedistributionStateRequest request);
+    Task<Response<Domain.Models.RedistributionEntity>> UpdateRedistributionStateAsync(UpdateRedistributionStateRequest request);
     
     [OperationContract]
-    Task<Response<List<Domain.Models.Redistribution>>> GetRedistributionsAsync(GetRedistributionsRequest request);
+    Task<Response<List<Domain.Models.RedistributionEntity>>> GetRedistributionsAsync(GetRedistributionsRequest request);
 }

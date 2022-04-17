@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MarketingBox.Redistribution.Service.Domain.Models;
 using MarketingBox.Redistribution.Service.Grpc;
 using MarketingBox.Redistribution.Service.Grpc.Models;
 using MarketingBox.Redistribution.Service.Storage;
@@ -22,7 +23,7 @@ namespace MarketingBox.Redistribution.Service.Services
             _redistributionStorage = redistributionStorage;
         }
 
-        public async Task CreateRedistributionAsync(Domain.Models.Redistribution entity)
+        public async Task CreateRedistributionAsync(RedistributionEntity entity)
         {
             try
             {
@@ -34,7 +35,7 @@ namespace MarketingBox.Redistribution.Service.Services
             }
         }
 
-        public async Task<Response<Domain.Models.Redistribution>> UpdateRedistributionStateAsync(UpdateRedistributionStateRequest request)
+        public async Task<Response<RedistributionEntity>> UpdateRedistributionStateAsync(UpdateRedistributionStateRequest request)
         {
             try
             {
@@ -42,12 +43,12 @@ namespace MarketingBox.Redistribution.Service.Services
                     .UpdateState(request.RedistributionId, request.Status);
 
                 if (entity == null)
-                    return new Response<Domain.Models.Redistribution>()
+                    return new Response<RedistributionEntity>
                     {
                         Status = ResponseStatus.NotFound
                     };
                 
-                return new Response<Domain.Models.Redistribution>()
+                return new Response<RedistributionEntity>
                 {
                     Status = ResponseStatus.Ok,
                     Data = entity
@@ -56,10 +57,10 @@ namespace MarketingBox.Redistribution.Service.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                return new Response<Domain.Models.Redistribution>()
+                return new Response<RedistributionEntity>
                 {
                     Status = ResponseStatus.InternalError,
-                    Error = new Error()
+                    Error = new Error
                     {
                         ErrorMessage = ex.Message
                     }
@@ -67,14 +68,14 @@ namespace MarketingBox.Redistribution.Service.Services
             }
         }
 
-        public async Task<Response<List<Domain.Models.Redistribution>>> GetRedistributionsAsync(GetRedistributionsRequest request)
+        public async Task<Response<List<RedistributionEntity>>> GetRedistributionsAsync(GetRedistributionsRequest request)
         {
             try
             {
                 var collection = await _redistributionStorage
                     .Get(request.CreatedBy, request.AffiliateId, request.CampaignId);
                 
-                return new Response<List<Domain.Models.Redistribution>>()
+                return new Response<List<RedistributionEntity>>
                 {
                     Status = ResponseStatus.Ok,
                     Data = collection
@@ -83,10 +84,10 @@ namespace MarketingBox.Redistribution.Service.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                return new Response<List<Domain.Models.Redistribution>>()
+                return new Response<List<RedistributionEntity>>
                 {
                     Status = ResponseStatus.InternalError,
-                    Error = new Error()
+                    Error = new Error
                     {
                         ErrorMessage = ex.Message
                     }

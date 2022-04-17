@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using MarketingBox.Redistribution.Service.Domain.Models;
 using MarketingBox.Redistribution.Service.Grpc;
 using MarketingBox.Redistribution.Service.Grpc.Models;
-using MarketingBox.Redistribution.Service.Logic;
-using MarketingBox.Redistribution.Service.Postgres;
+using MarketingBox.Redistribution.Service.Storage;
 using MarketingBox.Sdk.Common.Models;
 using MarketingBox.Sdk.Common.Models.Grpc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -17,14 +14,13 @@ namespace MarketingBox.Redistribution.Service.Services
 {
     public class RegistrationImporter: IRegistrationImporter
     {
-        private readonly DatabaseContextFactory _databaseContextFactory;
         private readonly ILogger<RegistrationImporter> _logger;
+        private readonly FileStorage _fileStorage;
 
-        public RegistrationImporter(DatabaseContextFactory databaseContextFactory, 
-            ILogger<RegistrationImporter> logger)
+        public RegistrationImporter(ILogger<RegistrationImporter> logger, FileStorage fileStorage)
         {
-            _databaseContextFactory = databaseContextFactory;
             _logger = logger;
+            _fileStorage = fileStorage;
         }
 
         public async Task<Response<ImportResponse>> ImportAsync(ImportRequest request)
@@ -39,10 +35,9 @@ namespace MarketingBox.Redistribution.Service.Services
                     CreatedBy = request.UserId,
                     File = request.RegistrationsFile
                 };
-                await using var ctx = _databaseContextFactory.Create();
-                ctx.RegistrationsFileCollection.Add(registrationsFile);
-                await ctx.SaveChangesAsync();
 
+                await _fileStorage.Save(registrationsFile);
+                
                 return new Response<ImportResponse>()
                 {
                     Status = ResponseStatus.Ok,
@@ -70,9 +65,8 @@ namespace MarketingBox.Redistribution.Service.Services
         {
             try
             {
-                await using var ctx = _databaseContextFactory.Create();
-                var files = await ctx.RegistrationsFileCollection.ToListAsync();
-
+                var files = await _fileStorage.Get();
+                
                 return new Response<GetRegistrationFilesResponse>()
                 {
                     Status = ResponseStatus.Ok,
@@ -100,11 +94,9 @@ namespace MarketingBox.Redistribution.Service.Services
         {
             try
             {
+                var registrationsFiles = await _fileStorage.ParseFile(request.FileId);
                 
-                await using var ctx = _databaseContextFactory.Create();
-                var registrationsFile = await ctx.RegistrationsFileCollection.FirstOrDefaultAsync(e => e.Id == request.FileId);
-
-                if (registrationsFile == null)
+                if (registrationsFiles == null)
                     return new Response<List<RegistrationFromFile>>()
                     {
                         Status = ResponseStatus.NotFound,
@@ -113,14 +105,11 @@ namespace MarketingBox.Redistribution.Service.Services
                             ErrorMessage = $"Cant find file with id {request.FileId}."
                         }
                     };
-                
-                var registrationsFromSvc =
-                    await RegistrationsSvcParser.GetRegistrationsFromFile(registrationsFile.File);
-                
+
                 return new Response<List<RegistrationFromFile>>()
                 {
                     Status = ResponseStatus.Ok,
-                    Data = registrationsFromSvc
+                    Data = registrationsFiles
                 };
             }
             catch (Exception ex)
