@@ -1,34 +1,32 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using MarketingBox.Redistribution.Service.Grpc;
 using MarketingBox.Redistribution.Service.Grpc.Models;
-using MarketingBox.Redistribution.Service.Postgres;
+using MarketingBox.Redistribution.Service.Storage;
 using MarketingBox.Sdk.Common.Models;
 using MarketingBox.Sdk.Common.Models.Grpc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace MarketingBox.Redistribution.Service.Services
 {
     public class RedistributionService : IRedistributionService
     {
-        private readonly DatabaseContextFactory _databaseContextFactory;
         private readonly ILogger<RedistributionService> _logger;
+        private readonly RedistributionStorage _redistributionStorage;
 
-        public RedistributionService(DatabaseContextFactory databaseContextFactory, ILogger<RedistributionService> logger)
+        public RedistributionService(ILogger<RedistributionService> logger, 
+            RedistributionStorage redistributionStorage)
         {
-            _databaseContextFactory = databaseContextFactory;
             _logger = logger;
+            _redistributionStorage = redistributionStorage;
         }
 
         public async Task CreateRedistributionAsync(Domain.Models.Redistribution entity)
         {
             try
             {
-                await using var ctx = _databaseContextFactory.Create();
-                ctx.RedistributionCollection.Upsert(entity);
+                await _redistributionStorage.Save(entity);
             }
             catch (Exception ex)
             {
@@ -40,19 +38,15 @@ namespace MarketingBox.Redistribution.Service.Services
         {
             try
             {
-                await using var ctx = _databaseContextFactory.Create();
-                var entity = await ctx.RedistributionCollection
-                    .FirstOrDefaultAsync(e => e.Id == request.RedistributionId);
+                var entity = await _redistributionStorage
+                    .UpdateState(request.RedistributionId, request.Status);
 
                 if (entity == null)
                     return new Response<Domain.Models.Redistribution>()
                     {
                         Status = ResponseStatus.NotFound
                     };
-
-                entity.Status = request.Status;
-                await ctx.SaveChangesAsync();
-
+                
                 return new Response<Domain.Models.Redistribution>()
                 {
                     Status = ResponseStatus.Ok,
@@ -77,18 +71,8 @@ namespace MarketingBox.Redistribution.Service.Services
         {
             try
             {
-                await using var ctx = _databaseContextFactory.Create();
-
-                IQueryable<Domain.Models.Redistribution> query = ctx.RedistributionCollection;
-
-                if (request.CreatedBy.HasValue && request.CreatedBy != 0)
-                    query = query.Where(e => e.CreatedBy == request.CreatedBy.Value);
-                if (request.AffiliateId.HasValue && request.AffiliateId != 0)
-                    query = query.Where(e => e.AffiliateId == request.AffiliateId.Value);
-                if (request.CampaignId.HasValue && request.CampaignId != 0)
-                    query = query.Where(e => e.CampaignId == request.CampaignId.Value);
-
-                var collection = query.ToList();
+                var collection = await _redistributionStorage
+                    .Get(request.CreatedBy, request.AffiliateId, request.CampaignId);
                 
                 return new Response<List<Domain.Models.Redistribution>>()
                 {
