@@ -79,10 +79,13 @@ namespace MarketingBox.Redistribution.Service.Jobs
         }
 
         private async Task ProcessRedistribution(RedistributionEntity entity, 
-            List<RedistributionLog> logs,
+            IEnumerable<RedistributionLog> logs,
             int portionSize)
         {
-            foreach (var log in logs.Where(e => e.Result == RedistributionResult.InQueue))
+            var portion = logs
+                .Where(e => e.Result == RedistributionResult.InQueue)
+                .Take(portionSize);
+            foreach (var log in portion)
             {
                 switch (log.Type)
                 {
@@ -100,7 +103,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
 
         private async Task ProcessRegistration(RedistributionLog log)
         {
-            throw new NotImplementedException();
+            // TODO: get from reportingService and push to registrationService, after - update log entity
         }
 
         private async Task ProcessFile(RedistributionLog log)
@@ -114,7 +117,10 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 return;
             }
             
-            
+            foreach (var registrationFromFile in registrationsFromFile)
+            {
+                // TODO: push to registrationService, after - update log entity
+            }
         }
 
         public void Start()
