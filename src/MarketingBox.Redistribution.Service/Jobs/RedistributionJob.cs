@@ -103,7 +103,15 @@ namespace MarketingBox.Redistribution.Service.Jobs
 
         private async Task ProcessRegistration(RedistributionLog log)
         {
+            Console.WriteLine("Send registration from DB");
+            SuccessLog(log);
             // TODO: get from reportingService and push to registrationService, after - update log entity
+        }
+
+        private static void SuccessLog(RedistributionLog log)
+        {
+            log.SendDate = DateTime.UtcNow;
+            log.Result = RedistributionResult.Success;
         }
 
         private async Task ProcessFile(RedistributionLog log)
@@ -119,6 +127,10 @@ namespace MarketingBox.Redistribution.Service.Jobs
             
             foreach (var registrationFromFile in registrationsFromFile)
             {
+                Console.WriteLine("Send registration from file");
+                
+                SuccessLog(log);
+                
                 // TODO: push to registrationService, after - update log entity
             }
         }

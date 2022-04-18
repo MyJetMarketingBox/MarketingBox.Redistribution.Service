@@ -23,15 +23,43 @@ namespace MarketingBox.Redistribution.Service.Services
             _redistributionStorage = redistributionStorage;
         }
 
-        public async Task CreateRedistributionAsync(RedistributionEntity entity)
+        public async Task<Response<RedistributionEntity>> CreateRedistributionAsync(CreateRedistributionRequest request)
         {
             try
             {
-                await _redistributionStorage.Save(entity);
+                var entity = new RedistributionEntity()
+                {
+                    AffiliateId = request.AffiliateId,
+                    CampaignId = request.CampaignId,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = request.CreatedBy,
+                    DayLimit = request.DayLimit,
+                    FilesIds = request.FilesIds,
+                    Frequency = request.Frequency,
+                    Status = request.Status,
+                    PortionLimit = request.PortionLimit,
+                    RegistrationsIds = request.RegistrationsIds
+                };
+                
+                var newEntity = await _redistributionStorage.Save(entity);
+
+                return new Response<RedistributionEntity>()
+                {
+                    Status = ResponseStatus.Ok,
+                    Data = newEntity
+                };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
+                return new Response<RedistributionEntity>
+                {
+                    Status = ResponseStatus.InternalError,
+                    Error = new Error
+                    {
+                        ErrorMessage = ex.Message
+                    }
+                };
             }
         }
 

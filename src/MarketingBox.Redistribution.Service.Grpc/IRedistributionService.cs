@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ServiceModel;
 using System.Threading.Tasks;
+using MarketingBox.Redistribution.Service.Domain.Models;
 using MarketingBox.Redistribution.Service.Grpc.Models;
 using MarketingBox.Sdk.Common.Models.Grpc;
 
@@ -10,11 +11,11 @@ namespace MarketingBox.Redistribution.Service.Grpc;
 public interface IRedistributionService
 {
     [OperationContract]
-    Task CreateRedistributionAsync(Domain.Models.RedistributionEntity entity);
+    Task<Response<RedistributionEntity>> CreateRedistributionAsync(CreateRedistributionRequest request);
     
     [OperationContract]
-    Task<Response<Domain.Models.RedistributionEntity>> UpdateRedistributionStateAsync(UpdateRedistributionStateRequest request);
+    Task<Response<RedistributionEntity>> UpdateRedistributionStateAsync(UpdateRedistributionStateRequest request);
     
     [OperationContract]
-    Task<Response<List<Domain.Models.RedistributionEntity>>> GetRedistributionsAsync(GetRedistributionsRequest request);
+    Task<Response<List<RedistributionEntity>>> GetRedistributionsAsync(GetRedistributionsRequest request);
 }

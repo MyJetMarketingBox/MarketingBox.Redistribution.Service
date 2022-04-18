@@ -16,7 +16,7 @@ namespace MarketingBox.Redistribution.Service.Storage
             _databaseContextFactory = databaseContextFactory;
         }
 
-        public async Task Save(RedistributionEntity entity)
+        public async Task<RedistributionEntity> Save(RedistributionEntity entity)
         {
             await using var ctx = _databaseContextFactory.Create();
             ctx.RedistributionCollection.Add(entity);
@@ -42,7 +42,10 @@ namespace MarketingBox.Redistribution.Service.Storage
                     Result = RedistributionResult.InQueue
                 }));
 
-            ctx.RedistributionLogCollection.UpsertRange(logs);
+            await ctx.RedistributionLogCollection.AddRangeAsync(logs);
+            await ctx.SaveChangesAsync();
+
+            return entity;
         }
 
         public async Task<RedistributionEntity?> UpdateState(long redistributionId, RedistributionState status)
