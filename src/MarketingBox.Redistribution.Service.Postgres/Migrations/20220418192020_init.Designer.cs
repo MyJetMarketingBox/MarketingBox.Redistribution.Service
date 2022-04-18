@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MarketingBox.Redistribution.Service.Postgres.Migrations
 {
     [DbContext(typeof(PgContext))]
-    [Migration("20220417160136_init")]
+    [Migration("20220418192020_init")]
     partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -104,6 +104,9 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
                     b.HasIndex("Result");
 
                     b.HasIndex("SendDate");
+
+                    b.HasIndex("RedistributionId", "Type", "EntityId")
+                        .IsUnique();
 
                     b.ToTable("redistribution-log", "redistribution-service");
                 });

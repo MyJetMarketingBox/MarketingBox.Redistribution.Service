@@ -16,6 +16,8 @@ namespace MarketingBox.Redistribution.Service.Jobs
         private readonly ILogger<RedistributionJob> _logger;
         private readonly RedistributionStorage _redistributionStorage;
         private readonly FileStorage _fileStorage;
+        
+        private static bool _activeProcessing;
 
         public RedistributionJob(ILogger<RedistributionJob> logger, 
             RedistributionStorage redistributionStorage, 
@@ -31,9 +33,16 @@ namespace MarketingBox.Redistribution.Service.Jobs
 
         private async Task DoTime()
         {
-            Console.WriteLine("RedistributionJob is OFFLINE");
-            return;
+            if (_activeProcessing)
+            {
+                return;
+            }
+            _activeProcessing = true;
             await ProcessRedistribution();
+            _activeProcessing = false;
+            
+            return;
+            Console.WriteLine("RedistributionJob is OFFLINE");
         }
 
         private async Task ProcessRedistribution()

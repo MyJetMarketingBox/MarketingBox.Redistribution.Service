@@ -85,6 +85,13 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
                 column: "RedistributionId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_redistribution-log_RedistributionId_Type_EntityId",
+                schema: "redistribution-service",
+                table: "redistribution-log",
+                columns: new[] { "RedistributionId", "Type", "EntityId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_redistribution-log_Result",
                 schema: "redistribution-service",
                 table: "redistribution-log",

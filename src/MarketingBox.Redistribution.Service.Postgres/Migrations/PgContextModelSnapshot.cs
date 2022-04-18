@@ -103,6 +103,9 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
 
                     b.HasIndex("SendDate");
 
+                    b.HasIndex("RedistributionId", "Type", "EntityId")
+                        .IsUnique();
+
                     b.ToTable("redistribution-log", "redistribution-service");
                 });
 

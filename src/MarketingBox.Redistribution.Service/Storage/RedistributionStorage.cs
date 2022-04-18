@@ -42,8 +42,7 @@ namespace MarketingBox.Redistribution.Service.Storage
                     Result = RedistributionResult.InQueue
                 }));
 
-            await ctx.RedistributionLogCollection.AddRangeAsync(logs);
-            await ctx.SaveChangesAsync();
+            await UpsertRedistributionLog(logs);
 
             return entity;
         }
@@ -89,8 +88,16 @@ namespace MarketingBox.Redistribution.Service.Storage
 
         public async Task SaveLogs(IEnumerable<RedistributionLog> logs)
         {
+            await UpsertRedistributionLog(logs);
+        }
+
+        private async Task UpsertRedistributionLog(IEnumerable<RedistributionLog> logs)
+        {
             await using var ctx = _databaseContextFactory.Create();
-            ctx.RedistributionLogCollection.UpsertRange(logs);
+            await ctx.RedistributionLogCollection
+                .UpsertRange(logs)
+                .On(e => new {e.RedistributionId, e.Type, e.EntityId})
+                .RunAsync();
         }
     }
 }

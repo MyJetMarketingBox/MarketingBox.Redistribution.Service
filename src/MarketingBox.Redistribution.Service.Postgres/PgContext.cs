@@ -38,6 +38,7 @@ namespace MarketingBox.Redistribution.Service.Postgres
             modelBuilder.Entity<RedistributionLog>().Property(e => e.Id).UseIdentityColumn();
             modelBuilder.Entity<RedistributionLog>().HasKey(e => e.Id);
             
+            modelBuilder.Entity<RedistributionLog>().HasIndex(e => new {e.RedistributionId, e.Type, e.EntityId}).IsUnique();
             modelBuilder.Entity<RedistributionLog>().HasIndex(e => e.RedistributionId);
             modelBuilder.Entity<RedistributionLog>().HasIndex(e => e.SendDate);
             modelBuilder.Entity<RedistributionLog>().HasIndex(e => e.Result);
