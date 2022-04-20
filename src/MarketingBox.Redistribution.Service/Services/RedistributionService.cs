@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MarketingBox.Redistribution.Service.Domain.Models;
 using MarketingBox.Redistribution.Service.Grpc;
 using MarketingBox.Redistribution.Service.Grpc.Models;
 using MarketingBox.Redistribution.Service.Storage;
+using MarketingBox.Reporting.Service.Grpc;
+using MarketingBox.Reporting.Service.Grpc.Requests.Registrations;
 using MarketingBox.Sdk.Common.Models;
 using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.Extensions.Logging;
@@ -15,18 +18,45 @@ namespace MarketingBox.Redistribution.Service.Services
     {
         private readonly ILogger<RedistributionService> _logger;
         private readonly RedistributionStorage _redistributionStorage;
+        private readonly IRegistrationService _registrationService;
 
         public RedistributionService(ILogger<RedistributionService> logger, 
-            RedistributionStorage redistributionStorage)
+            RedistributionStorage redistributionStorage, 
+            IRegistrationService registrationService)
         {
             _logger = logger;
             _redistributionStorage = redistributionStorage;
+            _registrationService = registrationService;
         }
 
         public async Task<Response<RedistributionEntity>> CreateRedistributionAsync(CreateRedistributionRequest request)
         {
             try
             {
+                var regIds = new List<long>();
+                
+                if (request.RegistrationsIds != null && request.RegistrationsIds.Any())
+                    regIds.AddRange(request.RegistrationsIds);
+                
+                if (request.RegistrationSearchRequest != null)
+                {
+                    var response = await _registrationService.SearchAsync(new RegistrationSearchRequest()
+                    {
+                        AffiliateId = request.RegistrationSearchRequest.AffiliateId,
+                        TenantId = request.RegistrationSearchRequest.TenantId,
+                        Type = request.RegistrationSearchRequest.Type,
+                        Country = request.RegistrationSearchRequest.Country,
+                        Status = request.RegistrationSearchRequest.Status,
+                        CrmStatus = request.RegistrationSearchRequest.CrmStatus,
+                        DateFrom = request.RegistrationSearchRequest.DateFrom,
+                        DateTo = request.RegistrationSearchRequest.DateTo
+                    });
+                    if (response.Status == ResponseStatus.Ok)
+                        regIds.AddRange(response.Data.Select(e => e.RegistrationId));
+                }
+
+                regIds = regIds.Distinct().ToList();
+                
                 var entity = new RedistributionEntity()
                 {
                     AffiliateId = request.AffiliateId,
@@ -38,7 +68,7 @@ namespace MarketingBox.Redistribution.Service.Services
                     Frequency = request.Frequency,
                     Status = request.Status,
                     PortionLimit = request.PortionLimit,
-                    RegistrationsIds = request.RegistrationsIds
+                    RegistrationsIds = regIds
                 };
                 
                 var newEntity = await _redistributionStorage.Save(entity);

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using MarketingBox.Redistribution.Service.Domain.Models;
+using MarketingBox.Reporting.Service.Grpc.Requests.Registrations;
 
 namespace MarketingBox.Redistribution.Service.Grpc.Models;
 
@@ -16,4 +17,5 @@ public class CreateRedistributionRequest
     [DataMember(Order = 7)] public int DayLimit { get; set; }
     [DataMember(Order = 8)] public List<long>? RegistrationsIds { get; set; }
     [DataMember(Order = 9)] public List<long>? FilesIds { get; set; }
+    [DataMember(Order = 10)] public RegistrationSearchRequest? RegistrationSearchRequest { get; set; }
 }

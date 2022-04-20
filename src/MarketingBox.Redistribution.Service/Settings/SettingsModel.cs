@@ -16,5 +16,11 @@ namespace MarketingBox.Redistribution.Service.Settings
 
         [YamlProperty("RedistributionService.PostgresConnectionString")]
         public string PostgresConnectionString { get; set; }
+
+        [YamlProperty("RedistributionService.ReportingServiceUrl")]
+        public string ReportingServiceUrl { get; set; }
+        
+        [YamlProperty("RedistributionService.RegistrationServiceUrl")]
+        public string RegistrationServiceUrl { get; set; }
     }
 }
