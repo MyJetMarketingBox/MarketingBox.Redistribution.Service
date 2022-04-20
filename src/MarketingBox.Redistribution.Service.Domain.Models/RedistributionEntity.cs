@@ -18,4 +18,5 @@ public class RedistributionEntity
     [DataMember(Order = 9)] public int DayLimit { get; set; }
     [DataMember(Order = 10)] public List<long>? RegistrationsIds { get; set; }
     [DataMember(Order = 11)] public List<long>? FilesIds { get; set; }
+    [DataMember(Order = 12)] public string? Metadata { get; set; }
 }

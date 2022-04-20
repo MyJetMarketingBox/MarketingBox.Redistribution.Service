@@ -22,5 +22,8 @@ namespace MarketingBox.Redistribution.Service.Settings
         
         [YamlProperty("RedistributionService.RegistrationServiceUrl")]
         public string RegistrationServiceUrl { get; set; }
+
+        [YamlProperty("RedistributionService.AffiliateServiceUrl")]
+        public string AffiliateServiceUrl { get; set; }
     }
 }

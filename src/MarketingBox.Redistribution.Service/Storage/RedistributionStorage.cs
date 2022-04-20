@@ -99,5 +99,13 @@ namespace MarketingBox.Redistribution.Service.Storage
                 .On(e => new {e.RedistributionId, e.Type, e.EntityId})
                 .RunAsync();
         }
+
+        public async Task<List<RedistributionEntity>> GetActual()
+        {
+            await using var ctx = _databaseContextFactory.Create();
+            return await ctx.RedistributionCollection
+                .Where(e => e.Status == RedistributionState.Enable)
+                .ToListAsync();
+        }
     }
 }
