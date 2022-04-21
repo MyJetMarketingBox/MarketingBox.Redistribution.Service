@@ -60,9 +60,6 @@ namespace MarketingBox.Redistribution.Service.Jobs
             _activeProcessing = true;
             await ProcessRedistribution();
             _activeProcessing = false;
-            
-            return;
-            Console.WriteLine("RedistributionJob is OFFLINE");
         }
 
         private async Task ProcessRedistribution()
@@ -162,7 +159,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
 
                     var registrationResponse = await _registrationService.CreateAsync(new RegistrationCreateRequest()
                     {
-                        RegistrationMode = RegistrationMode.Manual,
+                        RegistrationMode = RegistrationMode.Auto,
                         GeneralInfo = new RegistrationGeneralInfo()
                         {
                             FirstName = entity.FirstName,
@@ -196,7 +193,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
                             AffCode = entity.AffCode,
                         }
                     });
-                    SuccessLog(log, registrationResponse.Status.ToString());
+                    SuccessLog(log, JsonConvert.SerializeObject(registrationResponse));
                 }
                 else
                 {
@@ -247,7 +244,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
             
             var registrationResponse = await _registrationService.CreateAsync(new RegistrationCreateRequest()
             {
-                RegistrationMode = RegistrationMode.Manual,
+                RegistrationMode = RegistrationMode.Auto,
                 GeneralInfo = new RegistrationGeneralInfo()
                 {
                     FirstName = entity.FirstName,
@@ -266,7 +263,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
                     CampaignId = redistribution.CampaignId
                 }
             });
-            SuccessLog(log, registrationResponse.Status.ToString());
+            SuccessLog(log, JsonConvert.SerializeObject(registrationResponse));
         }
 
         public void Start()
