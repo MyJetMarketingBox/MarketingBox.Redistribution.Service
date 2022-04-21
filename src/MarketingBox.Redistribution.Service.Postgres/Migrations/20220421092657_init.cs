@@ -30,7 +30,8 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
                     PortionLimit = table.Column<int>(type: "integer", nullable: false),
                     DayLimit = table.Column<int>(type: "integer", nullable: false),
                     RegistrationsIds = table.Column<List<long>>(type: "bigint[]", nullable: true),
-                    FilesIds = table.Column<List<long>>(type: "bigint[]", nullable: true)
+                    FilesIds = table.Column<List<long>>(type: "bigint[]", nullable: true),
+                    Metadata = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -46,8 +47,8 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     RedistributionId = table.Column<long>(type: "bigint", nullable: false),
                     SendDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Type = table.Column<int>(type: "integer", nullable: false),
-                    EntityId = table.Column<long>(type: "bigint", nullable: false),
+                    Storage = table.Column<int>(type: "integer", nullable: false),
+                    EntityId = table.Column<string>(type: "text", nullable: false),
                     Result = table.Column<int>(type: "integer", nullable: false),
                     Metadata = table.Column<string>(type: "text", nullable: true)
                 },
@@ -85,10 +86,10 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
                 column: "RedistributionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_redistribution-log_RedistributionId_Type_EntityId",
+                name: "IX_redistribution-log_RedistributionId_Storage_EntityId",
                 schema: "redistribution-service",
                 table: "redistribution-log",
-                columns: new[] { "RedistributionId", "Type", "EntityId" },
+                columns: new[] { "RedistributionId", "Storage", "EntityId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(

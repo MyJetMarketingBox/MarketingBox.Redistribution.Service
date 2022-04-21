@@ -8,7 +8,7 @@ namespace MarketingBox.Redistribution.Service.Logic
 {
     public class RegistrationsSvcParser
     {
-        public static async Task<List<RegistrationFromFile>> GetRegistrationsFromFile(byte[] file)
+        public static async Task<List<RegistrationFromFile>> GetRegistrationsFromFile(long fileId, byte[] file)
         {
             var registrationsSvc = new List<RegistrationFromFile>();
             
@@ -32,7 +32,9 @@ namespace MarketingBox.Redistribution.Service.Logic
                     Email = fields[2],
                     Phone = fields[3],
                     Password = fields[4],
-                    Ip = fields[5]
+                    Ip = fields[5],
+                    CountryAlfa2Code = fields[6],
+                    FileId = fileId
                 });
             }
             return registrationsSvc;

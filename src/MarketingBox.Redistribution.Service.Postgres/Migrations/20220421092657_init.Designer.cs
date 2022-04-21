@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MarketingBox.Redistribution.Service.Postgres.Migrations
 {
     [DbContext(typeof(PgContext))]
-    [Migration("20220418192020_init")]
+    [Migration("20220421092657_init")]
     partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -21,7 +21,7 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("redistribution-service")
-                .HasAnnotation("ProductVersion", "6.0.3")
+                .HasAnnotation("ProductVersion", "6.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -55,6 +55,9 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
                     b.Property<int>("Frequency")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Metadata")
+                        .HasColumnType("text");
+
                     b.Property<int>("PortionLimit")
                         .HasColumnType("integer");
 
@@ -79,8 +82,9 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("EntityId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Metadata")
                         .HasColumnType("text");
@@ -94,7 +98,7 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
                     b.Property<DateTime?>("SendDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("Type")
+                    b.Property<int>("Storage")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -105,7 +109,7 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
 
                     b.HasIndex("SendDate");
 
-                    b.HasIndex("RedistributionId", "Type", "EntityId")
+                    b.HasIndex("RedistributionId", "Storage", "EntityId")
                         .IsUnique();
 
                     b.ToTable("redistribution-log", "redistribution-service");

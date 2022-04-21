@@ -6,6 +6,7 @@ using Autofac;
 using MarketingBox.Affiliate.Service.Grpc;
 using MarketingBox.Affiliate.Service.Grpc.Requests.Affiliates;
 using MarketingBox.Redistribution.Service.Domain.Models;
+using MarketingBox.Redistribution.Service.Logic;
 using MarketingBox.Redistribution.Service.Storage;
 using MarketingBox.Registration.Service.Domain.Models.Affiliate;
 using MarketingBox.Registration.Service.Domain.Models.Registrations;
@@ -123,12 +124,12 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 .Take(portionSize);
             foreach (var log in portion)
             {
-                switch (log.Type)
+                switch (log.Storage)
                 {
-                    case RedistributionEntityType.File:
+                    case EntityStorage.File:
                         await ProcessFile(log, entity, affiliateResponse.Data);
                         break;
-                    case RedistributionEntityType.Registration:
+                    case EntityStorage.Database:
                         await ProcessRegistration(log, entity, affiliateResponse.Data);
                         break;
                     default:
@@ -152,7 +153,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
             {
                 var reportingResponse = await _reportingService.SearchAsync(new RegistrationSearchRequest()
                 {
-                    RegistrationId = log.EntityId
+                    RegistrationId = long.Parse(log.EntityId)
                 });
 
                 if (reportingResponse.Status == ResponseStatus.Ok && reportingResponse.Data.Any())
@@ -199,17 +200,17 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 }
                 else
                 {
-                    ErrorLog(log, "Cannot find registration.");
+                    FailLog(log, "Cannot find registration.");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                ErrorLog(log, JsonConvert.SerializeObject(ex));
+                FailLog(log, JsonConvert.SerializeObject(ex));
             }
         }
 
-        private static void ErrorLog(RedistributionLog log, string metadata)
+        private static void FailLog(RedistributionLog log, string metadata)
         {
             log.SendDate = DateTime.UtcNow;
             log.Result = RedistributionResult.Error;
@@ -226,23 +227,46 @@ namespace MarketingBox.Redistribution.Service.Jobs
         private async Task ProcessFile(RedistributionLog log, RedistributionEntity redistribution,
             Affiliate.Service.Domain.Models.Affiliates.Affiliate affiliate)
         {
-            var registrationsFromFile = await _fileStorage.ParseFile(log.EntityId);
+            var registrations = await _fileStorage
+                .ParseFile(FileEntityUniqGenerator.GetFileId(log.EntityId));
 
-            if (registrationsFromFile == null || !registrationsFromFile.Any())
+            if (registrations == null || !registrations.Any())
             {
-                log.Result = RedistributionResult.Error;
-                log.Metadata = "File is empty.";
+                FailLog(log, "File is empty.");
+                return;
+            }
+
+            var entity =
+                registrations.FirstOrDefault(e => FileEntityUniqGenerator.GenerateUniq(e) == log.EntityId);
+
+            if (entity == null)
+            {
+                FailLog(log, "Cannot find entity in file.");
                 return;
             }
             
-            foreach (var registrationFromFile in registrationsFromFile)
+            var registrationResponse = await _registrationService.CreateAsync(new RegistrationCreateRequest()
             {
-                Console.WriteLine("Send registration from file");
-                
-                SuccessLog(log, string.Empty);
-                
-                // TODO: push to registrationService, after - update log entity
-            }
+                RegistrationMode = RegistrationMode.Manual,
+                GeneralInfo = new RegistrationGeneralInfo()
+                {
+                    FirstName = entity.FirstName,
+                    LastName = entity.LastName,
+                    Password = entity.Password,
+                    Email = entity.Email,
+                    Phone = entity.Phone,
+                    Ip = entity.Ip,
+                    CountryCode = entity.CountryAlfa2Code,
+                    CountryCodeType = CountryCodeType.Alfa2Code
+                },
+                AuthInfo = new AffiliateAuthInfo()
+                {
+                    AffiliateId = redistribution.AffiliateId,
+                    ApiKey = affiliate.ApiKey,
+                    CampaignId = redistribution.CampaignId
+                }
+            });
+            SuccessLog(log, registrationResponse.Status.ToString());
         }
 
         public void Start()

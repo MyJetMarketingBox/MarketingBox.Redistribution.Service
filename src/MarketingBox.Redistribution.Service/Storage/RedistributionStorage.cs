@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MarketingBox.Redistribution.Service.Domain.Models;
+using MarketingBox.Redistribution.Service.Logic;
 using MarketingBox.Redistribution.Service.Postgres;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,10 +11,13 @@ namespace MarketingBox.Redistribution.Service.Storage
     public class RedistributionStorage
     {
         private readonly DatabaseContextFactory _databaseContextFactory;
+        private readonly FileStorage _fileStorage;
 
-        public RedistributionStorage(DatabaseContextFactory databaseContextFactory)
+        public RedistributionStorage(DatabaseContextFactory databaseContextFactory, 
+            FileStorage fileStorage)
         {
             _databaseContextFactory = databaseContextFactory;
+            _fileStorage = fileStorage;
         }
 
         public async Task<RedistributionEntity> Save(RedistributionEntity entity)
@@ -28,23 +32,40 @@ namespace MarketingBox.Redistribution.Service.Storage
                 logs.AddRange(entity.RegistrationsIds.Select(e => new RedistributionLog()
                 {
                     RedistributionId = entity.Id,
-                    Type = RedistributionEntityType.Registration,
-                    EntityId = e,
-                    Result = RedistributionResult.InQueue
-                }));
-            
-            if (entity.FilesIds != null && entity.FilesIds.Any())
-                logs.AddRange(entity.FilesIds.Select(e => new RedistributionLog()
-                {
-                    RedistributionId = entity.Id,
-                    Type = RedistributionEntityType.File,
-                    EntityId = e,
+                    Storage = EntityStorage.Database,
+                    EntityId = e.ToString(),
                     Result = RedistributionResult.InQueue
                 }));
 
+            if (entity.FilesIds != null && entity.FilesIds.Any())
+            {
+                foreach (var fileId in entity.FilesIds)
+                {
+                    var entitiesIds = await GetFileEntities(fileId);
+                    
+                    if (entitiesIds.Any())
+                        logs.AddRange(entitiesIds.Select(e => new RedistributionLog()
+                        {
+                            RedistributionId = entity.Id,
+                            Storage = EntityStorage.File,
+                            EntityId = e,
+                            Result = RedistributionResult.InQueue
+                        }));
+                }
+            }
             await UpsertRedistributionLog(logs);
 
             return entity;
+        }
+
+        private async Task<List<string> > GetFileEntities(long fileId)
+        {
+            var registrations = await _fileStorage.ParseFile(fileId);
+
+            if (registrations == null || !registrations.Any())
+                return new List<string>();
+            
+            return registrations.Select(FileEntityUniqGenerator.GenerateUniq).ToList();
         }
 
         public async Task<RedistributionEntity?> UpdateState(long redistributionId, RedistributionState status)
@@ -96,7 +117,7 @@ namespace MarketingBox.Redistribution.Service.Storage
             await using var ctx = _databaseContextFactory.Create();
             await ctx.RedistributionLogCollection
                 .UpsertRange(logs)
-                .On(e => new {e.RedistributionId, e.Type, e.EntityId})
+                .On(e => new {e.RedistributionId, Type = e.Storage, e.EntityId})
                 .RunAsync();
         }
 

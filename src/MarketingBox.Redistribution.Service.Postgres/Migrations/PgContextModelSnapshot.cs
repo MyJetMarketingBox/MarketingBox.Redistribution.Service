@@ -80,8 +80,9 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("EntityId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Metadata")
                         .HasColumnType("text");
@@ -95,7 +96,7 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
                     b.Property<DateTime?>("SendDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("Type")
+                    b.Property<int>("Storage")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -106,7 +107,7 @@ namespace MarketingBox.Redistribution.Service.Postgres.Migrations
 
                     b.HasIndex("SendDate");
 
-                    b.HasIndex("RedistributionId", "Type", "EntityId")
+                    b.HasIndex("RedistributionId", "Storage", "EntityId")
                         .IsUnique();
 
                     b.ToTable("redistribution-log", "redistribution-service");

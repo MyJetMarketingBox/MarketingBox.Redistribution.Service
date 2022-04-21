@@ -37,7 +37,7 @@ namespace MarketingBox.Redistribution.Service.Storage
             if (registrationsFile == null)
                 return null;
             
-            return await RegistrationsSvcParser.GetRegistrationsFromFile(registrationsFile.File);
+            return await RegistrationsSvcParser.GetRegistrationsFromFile(fileId, registrationsFile.File);
         }
     }
 }

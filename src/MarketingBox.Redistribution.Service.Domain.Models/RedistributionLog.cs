@@ -9,8 +9,8 @@ public class RedistributionLog
     [DataMember(Order = 1)] public long Id { get; set; }
     [DataMember(Order = 2)] public long RedistributionId { get; set; }
     [DataMember(Order = 3)] public DateTime? SendDate { get; set; }
-    [DataMember(Order = 4)] public RedistributionEntityType Type { get; set; }
-    [DataMember(Order = 5)] public long EntityId { get; set; }
+    [DataMember(Order = 4)] public EntityStorage Storage { get; set; }
+    [DataMember(Order = 5)] public string EntityId { get; set; }
     [DataMember(Order = 6)]  public RedistributionResult Result { get; set; }
     [DataMember(Order = 7)] public string? Metadata { get; set; }
 }
@@ -22,8 +22,8 @@ public enum RedistributionResult
     Error
 }
 
-public enum RedistributionEntityType
+public enum EntityStorage
 {
-    Registration,
+    Database,
     File
 }
