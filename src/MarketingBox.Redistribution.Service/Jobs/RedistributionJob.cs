@@ -30,13 +30,13 @@ namespace MarketingBox.Redistribution.Service.Jobs
         private readonly IRegistrationService _registrationService;
         private readonly Reporting.Service.Grpc.IRegistrationService _reportingService;
         private readonly IAffiliateService _affiliateService;
-        
+
         private static bool _activeProcessing;
 
-        public RedistributionJob(ILogger<RedistributionJob> logger, 
-            RedistributionStorage redistributionStorage, 
-            FileStorage fileStorage, 
-            IRegistrationService registrationService, 
+        public RedistributionJob(ILogger<RedistributionJob> logger,
+            RedistributionStorage redistributionStorage,
+            FileStorage fileStorage,
+            IRegistrationService registrationService,
             Reporting.Service.Grpc.IRegistrationService reportingService,
             IAffiliateService affiliateService)
         {
@@ -46,7 +46,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
             _registrationService = registrationService;
             _reportingService = reportingService;
             _affiliateService = affiliateService;
-            _timer = new MyTaskTimer(nameof(RedistributionJob), 
+            _timer = new MyTaskTimer(nameof(RedistributionJob),
                 TimeSpan.FromSeconds(60),
                 logger, DoTime);
         }
@@ -57,6 +57,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
             {
                 return;
             }
+
             _activeProcessing = true;
             await ProcessRedistribution();
             _activeProcessing = false;
@@ -97,11 +98,12 @@ namespace MarketingBox.Redistribution.Service.Jobs
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+
                 await _redistributionStorage.SaveLogs(logs);
             }
         }
 
-        private async Task ProcessRedistribution(RedistributionEntity entity, 
+        private async Task ProcessRedistribution(RedistributionEntity entity,
             IEnumerable<RedistributionLog> logs,
             int portionSize)
         {
@@ -115,7 +117,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 await FailRedistribution(entity);
                 return;
             }
-            
+
             var portion = logs
                 .Where(e => e.Result == RedistributionResult.InQueue)
                 .Take(portionSize);
@@ -159,7 +161,6 @@ namespace MarketingBox.Redistribution.Service.Jobs
 
                     var registrationResponse = await _registrationService.CreateAsync(new RegistrationCreateRequest()
                     {
-                        RegistrationMode = RegistrationMode.Auto,
                         GeneralInfo = new RegistrationGeneralInfo()
                         {
                             FirstName = entity.FirstName,
@@ -175,8 +176,8 @@ namespace MarketingBox.Redistribution.Service.Jobs
                         {
                             AffiliateId = redistributionEntity.AffiliateId,
                             ApiKey = affiliate.ApiKey,
-                            CampaignId = redistributionEntity.CampaignId
                         },
+                        CampaignId = redistributionEntity.CampaignId,
                         AdditionalInfo = new RegistrationAdditionalInfo()
                         {
                             Sub1 = entity.Sub1,
@@ -241,10 +242,9 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 FailLog(log, "Cannot find entity in file.");
                 return;
             }
-            
+
             var registrationResponse = await _registrationService.CreateAsync(new RegistrationCreateRequest()
             {
-                RegistrationMode = RegistrationMode.Auto,
                 GeneralInfo = new RegistrationGeneralInfo()
                 {
                     FirstName = entity.FirstName,
@@ -260,8 +260,8 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 {
                     AffiliateId = redistribution.AffiliateId,
                     ApiKey = affiliate.ApiKey,
-                    CampaignId = redistribution.CampaignId
-                }
+                },
+                CampaignId = redistribution.CampaignId
             });
             SuccessLog(log, JsonConvert.SerializeObject(registrationResponse));
         }
