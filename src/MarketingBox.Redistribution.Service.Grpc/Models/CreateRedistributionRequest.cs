@@ -15,7 +15,8 @@ public class CreateRedistributionRequest
     [DataMember(Order = 5)] public RedistributionState Status { get; set; }
     [DataMember(Order = 6)] public int PortionLimit { get; set; }
     [DataMember(Order = 7)] public int DayLimit { get; set; }
-    [DataMember(Order = 8)] public List<long>? RegistrationsIds { get; set; }
-    [DataMember(Order = 9)] public List<long>? FilesIds { get; set; }
-    [DataMember(Order = 10)] public RegistrationSearchRequest? RegistrationSearchRequest { get; set; }
+    [DataMember(Order = 8)] public bool UseAutologin { get; set; }
+    [DataMember(Order = 9)] public List<long>? RegistrationsIds { get; set; }
+    [DataMember(Order = 10)] public List<long>? FilesIds { get; set; }
+    [DataMember(Order = 11)] public RegistrationSearchRequest? RegistrationSearchRequest { get; set; }
 }

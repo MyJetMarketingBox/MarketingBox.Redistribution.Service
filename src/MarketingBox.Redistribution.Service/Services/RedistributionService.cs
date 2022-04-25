@@ -68,7 +68,8 @@ namespace MarketingBox.Redistribution.Service.Services
                     Frequency = request.Frequency,
                     Status = request.Status,
                     PortionLimit = request.PortionLimit,
-                    RegistrationsIds = regIds
+                    RegistrationsIds = regIds,
+                    UseAutologin = request.UseAutologin
                 };
                 
                 var newEntity = await _redistributionStorage.Save(entity);
