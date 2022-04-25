@@ -14,7 +14,7 @@ public class TestAutoLoginClicker
     [Test]
     public async Task Test1()
     {
-        var result = await AutoLoginClicker.Click("https://gengine.ru");
-        Assert.AreEqual(200, result);
+        var result = await AutoLoginClicker.Click("https://google.ru");
+        Assert.AreEqual(200, result.StatusCode);
     }
 }
