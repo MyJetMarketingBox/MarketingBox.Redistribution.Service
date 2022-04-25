@@ -13,6 +13,7 @@ public class RedistributionLog
     [DataMember(Order = 5)] public string EntityId { get; set; }
     [DataMember(Order = 6)] public RedistributionResult Result { get; set; }
     [DataMember(Order = 7)] public string? Metadata { get; set; }
+    [DataMember(Order = 8)] public int? AutologinResult { get; set; }
 }
 
 public enum RedistributionResult

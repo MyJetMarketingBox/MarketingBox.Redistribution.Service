@@ -67,33 +67,33 @@ namespace MarketingBox.Redistribution.Service.Jobs
         {
             var collection = await _redistributionStorage.GetActual();
 
-            foreach (var entity in collection)
+            foreach (var redistribution in collection)
             {
-                var logs = await _redistributionStorage.GetLogs(entity.Id);
+                var logs = await _redistributionStorage.GetLogs(redistribution.Id);
 
                 var todaySent = logs.Count(e => e.SendDate?.Date == DateTime.UtcNow.Date);
 
-                if (todaySent >= entity.DayLimit)
+                if (todaySent >= redistribution.DayLimit)
                     continue;
 
-                var canSendToday = entity.DayLimit - todaySent;
+                var canSendToday = redistribution.DayLimit - todaySent;
 
-                var nextPortion = canSendToday > entity.PortionLimit
-                    ? entity.PortionLimit
+                var nextPortion = canSendToday > redistribution.PortionLimit
+                    ? redistribution.PortionLimit
                     : canSendToday;
 
-                switch (entity.Frequency)
+                switch (redistribution.Frequency)
                 {
                     case RedistributionFrequency.Minute:
-                        await ProcessRedistribution(entity, logs, nextPortion);
+                        await ProcessRedistribution(redistribution, logs, nextPortion);
                         break;
                     case RedistributionFrequency.Hour:
                         if (logs.Max(e => e.SendDate) <= DateTime.UtcNow.AddHours(-1))
-                            await ProcessRedistribution(entity, logs, nextPortion);
+                            await ProcessRedistribution(redistribution, logs, nextPortion);
                         break;
                     case RedistributionFrequency.Day:
                         if (logs.Max(e => e.SendDate) <= DateTime.UtcNow.AddDays(-1))
-                            await ProcessRedistribution(entity, logs, nextPortion);
+                            await ProcessRedistribution(redistribution, logs, nextPortion);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -103,18 +103,18 @@ namespace MarketingBox.Redistribution.Service.Jobs
             }
         }
 
-        private async Task ProcessRedistribution(RedistributionEntity entity,
+        private async Task ProcessRedistribution(RedistributionEntity redistribution,
             IEnumerable<RedistributionLog> logs,
             int portionSize)
         {
             var affiliateResponse = await _affiliateService.GetAsync(new AffiliateByIdRequest()
             {
-                AffiliateId = entity.AffiliateId
+                AffiliateId = redistribution.AffiliateId
             });
 
             if (affiliateResponse.Status != ResponseStatus.Ok || affiliateResponse.Data == null)
             {
-                await FailRedistribution(entity);
+                await FailRedistribution(redistribution);
                 return;
             }
 
@@ -126,10 +126,10 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 switch (log.Storage)
                 {
                     case EntityStorage.File:
-                        await ProcessFile(log, entity, affiliateResponse.Data);
+                        await ProcessFile(log, redistribution, affiliateResponse.Data);
                         break;
                     case EntityStorage.Database:
-                        await ProcessRegistration(log, entity, affiliateResponse.Data);
+                        await ProcessRegistration(log, redistribution, affiliateResponse.Data);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -194,7 +194,34 @@ namespace MarketingBox.Redistribution.Service.Jobs
                             AffCode = entity.AffCode,
                         }
                     });
-                    SuccessLog(log, JsonConvert.SerializeObject(registrationResponse));
+                    
+                    if (redistributionEntity.UseAutologin)
+                    {
+                        var autologinResult =
+                            await AutoLoginClicker.Click(registrationResponse.Data.BrandInfo.LoginUrl);
+
+                        if (autologinResult.Success)
+                        {
+                            SuccessLog(log, 
+                                JsonConvert.SerializeObject(registrationResponse), 
+                                autologinResult.StatusCode);
+                        }
+                        else
+                        {
+                            _logger.LogError("Cannot autologin. " +
+                                             $"RedistributionId = {redistributionEntity.Id}. LogId = {log.Id}. " +
+                                             $"AutologinError = {autologinResult.ErrorMessage}");
+                            SuccessLog(log, 
+                                JsonConvert.SerializeObject(registrationResponse) + JsonConvert.SerializeObject(autologinResult),
+                                null);
+                        }
+                    }
+                    else
+                    {
+                        SuccessLog(log, 
+                            JsonConvert.SerializeObject(registrationResponse), 
+                            null);
+                    }
                 }
                 else
                 {
@@ -215,11 +242,14 @@ namespace MarketingBox.Redistribution.Service.Jobs
             log.Metadata = metadata;
         }
 
-        private static void SuccessLog(RedistributionLog log, string metadata)
+        private static void SuccessLog(RedistributionLog log, string metadata, int? autologinResult)
         {
             log.SendDate = DateTime.UtcNow;
             log.Result = RedistributionResult.Success;
             log.Metadata = metadata;
+
+            if (autologinResult != null)
+                log.AutologinResult = autologinResult;
         }
 
         private async Task ProcessFile(RedistributionLog log, RedistributionEntity redistribution,
@@ -263,7 +293,34 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 },
                 CampaignId = redistribution.CampaignId
             });
-            SuccessLog(log, JsonConvert.SerializeObject(registrationResponse));
+            
+            if (redistribution.UseAutologin)
+            {
+                var autologinResult =
+                    await AutoLoginClicker.Click(registrationResponse.Data.BrandInfo.LoginUrl);
+
+                if (autologinResult.Success)
+                {
+                    SuccessLog(log, 
+                        JsonConvert.SerializeObject(registrationResponse), 
+                        autologinResult.StatusCode);
+                }
+                else
+                {
+                    _logger.LogError("Cannot autologin. " +
+                                     $"RedistributionId = {redistribution.Id}. LogId = {log.Id}. " +
+                                     $"AutologinError = {autologinResult.ErrorMessage}");
+                    SuccessLog(log, 
+                        JsonConvert.SerializeObject(registrationResponse) + JsonConvert.SerializeObject(autologinResult),
+                        null);
+                }
+            }
+            else
+            {
+                SuccessLog(log, 
+                    JsonConvert.SerializeObject(registrationResponse), 
+                    null);
+            }
         }
 
         public void Start()

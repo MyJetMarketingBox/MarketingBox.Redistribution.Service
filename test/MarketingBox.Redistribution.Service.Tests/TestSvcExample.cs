@@ -7,7 +7,7 @@ using NUnit.Framework;
 
 namespace MarketingBox.Redistribution.Service.Tests
 {
-    public class TestExample
+    public class TestSvcExample
     {
         [SetUp]
         public void Setup()
