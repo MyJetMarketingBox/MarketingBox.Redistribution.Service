@@ -29,7 +29,9 @@ namespace MarketingBox.Redistribution.Service.Storage
             var logs = new List<RedistributionLog>();
             
             if (entity.RegistrationsIds != null && entity.RegistrationsIds.Any())
-                logs.AddRange(entity.RegistrationsIds.Select(e => new RedistributionLog()
+                logs.AddRange(entity.RegistrationsIds
+                    .Distinct()
+                    .Select(e => new RedistributionLog()
                 {
                     RedistributionId = entity.Id,
                     Storage = EntityStorage.Database,
@@ -42,15 +44,19 @@ namespace MarketingBox.Redistribution.Service.Storage
                 foreach (var fileId in entity.FilesIds)
                 {
                     var entitiesIds = await GetFileEntities(fileId);
-                    
-                    if (entitiesIds.Any())
-                        logs.AddRange(entitiesIds.Select(e => new RedistributionLog()
+
+                    if (!entitiesIds.Any()) 
+                        continue;
+                    foreach (var element in entitiesIds.Where(element => logs.All(e => e.EntityId != element)))
+                    {
+                        logs.Add(new RedistributionLog
                         {
-                            RedistributionId = entity.Id,
-                            Storage = EntityStorage.File,
-                            EntityId = e,
+                            RedistributionId = entity.Id, 
+                            Storage = EntityStorage.File, 
+                            EntityId = element, 
                             Result = RedistributionResult.InQueue
-                        }));
+                        });
+                    }
                 }
             }
             await UpsertRedistributionLog(logs);
@@ -117,7 +123,7 @@ namespace MarketingBox.Redistribution.Service.Storage
             await using var ctx = _databaseContextFactory.Create();
             await ctx.RedistributionLogCollection
                 .UpsertRange(logs)
-                .On(e => new {e.RedistributionId, Type = e.Storage, e.EntityId})
+                .On(e => new {e.RedistributionId, e.Storage, e.EntityId})
                 .RunAsync();
         }
 
