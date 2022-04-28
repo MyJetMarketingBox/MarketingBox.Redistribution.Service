@@ -273,6 +273,18 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(entity.FirstName) ||
+                string.IsNullOrWhiteSpace(entity.LastName) ||
+                string.IsNullOrWhiteSpace(entity.Email) ||
+                string.IsNullOrWhiteSpace(entity.Phone) ||
+                string.IsNullOrWhiteSpace(entity.Password) ||
+                string.IsNullOrWhiteSpace(entity.Ip) ||
+                string.IsNullOrWhiteSpace(entity.CountryAlfa2Code))
+            {
+                FailLog(log, "Cannot send entity with empty fields.");
+                return;
+            }
+
             var registrationResponse = await _registrationService.CreateAsync(new RegistrationCreateRequest()
             {
                 GeneralInfo = new RegistrationGeneralInfo()
