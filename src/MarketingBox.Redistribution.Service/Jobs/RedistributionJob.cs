@@ -197,8 +197,18 @@ namespace MarketingBox.Redistribution.Service.Jobs
                     
                     if (redistributionEntity.UseAutologin)
                     {
+                        if (string.IsNullOrWhiteSpace(registrationResponse.Data.CustomerLoginUrl))
+                        {
+                            _logger.LogError("Cannot autologin. " +
+                                             $"RedistributionId = {redistributionEntity.Id}. LogId = {log.Id}. " +
+                                             $"AutologinError = CustomerLoginUrl is empty.");
+                            SuccessLog(log, 
+                                JsonConvert.SerializeObject(registrationResponse),
+                                null);
+                            return;
+                        }
                         var autologinResult =
-                            await AutoLoginClicker.Click(registrationResponse.Data.BrandInfo.LoginUrl);
+                            await AutoLoginClicker.Click(registrationResponse.Data.CustomerLoginUrl);
 
                         if (autologinResult.Success)
                         {
@@ -308,8 +318,18 @@ namespace MarketingBox.Redistribution.Service.Jobs
             
             if (redistribution.UseAutologin)
             {
+                if (string.IsNullOrWhiteSpace(registrationResponse.Data.CustomerLoginUrl))
+                {
+                    _logger.LogError("Cannot autologin. " +
+                                     $"RedistributionId = {redistribution.Id}. LogId = {log.Id}. " +
+                                     $"AutologinError = CustomerLoginUrl is empty.");
+                    SuccessLog(log, 
+                        JsonConvert.SerializeObject(registrationResponse),
+                        null);
+                    return;
+                }
                 var autologinResult =
-                    await AutoLoginClicker.Click(registrationResponse.Data.BrandInfo.LoginUrl);
+                    await AutoLoginClicker.Click(registrationResponse.Data.CustomerLoginUrl);
 
                 if (autologinResult.Success)
                 {
