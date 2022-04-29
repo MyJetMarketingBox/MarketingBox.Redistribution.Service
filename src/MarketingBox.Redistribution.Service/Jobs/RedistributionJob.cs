@@ -103,7 +103,6 @@ namespace MarketingBox.Redistribution.Service.Jobs
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-
                 await _redistributionStorage.SaveLogs(logs);
             }
         }
