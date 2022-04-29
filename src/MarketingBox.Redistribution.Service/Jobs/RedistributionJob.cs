@@ -71,6 +71,9 @@ namespace MarketingBox.Redistribution.Service.Jobs
             {
                 var logs = await _redistributionStorage.GetLogs(redistribution.Id);
 
+                if (!logs.Any())
+                    continue;
+
                 var todaySent = logs.Count(e => e.SendDate?.Date == DateTime.UtcNow.Date);
 
                 if (todaySent >= redistribution.DayLimit)
@@ -88,11 +91,13 @@ namespace MarketingBox.Redistribution.Service.Jobs
                         await ProcessRedistribution(redistribution, logs, nextPortion);
                         break;
                     case RedistributionFrequency.Hour:
-                        if (logs.Max(e => e.SendDate) <= DateTime.UtcNow.AddHours(-1))
+                        if (logs.All(e => e.SendDate == null) || 
+                            logs.Max(e => e.SendDate) <= DateTime.UtcNow.AddHours(-1))
                             await ProcessRedistribution(redistribution, logs, nextPortion);
                         break;
                     case RedistributionFrequency.Day:
-                        if (logs.Max(e => e.SendDate) <= DateTime.UtcNow.AddDays(-1))
+                        if (logs.All(e => e.SendDate == null) || 
+                            logs.Max(e => e.SendDate) <= DateTime.UtcNow.AddDays(-1))
                             await ProcessRedistribution(redistribution, logs, nextPortion);
                         break;
                     default:
