@@ -111,33 +111,40 @@ namespace MarketingBox.Redistribution.Service.Jobs
             IEnumerable<RedistributionLog> logs,
             int portionSize)
         {
-            var affiliateResponse = await _affiliateService.GetAsync(new AffiliateByIdRequest()
+            try
             {
-                AffiliateId = redistribution.AffiliateId
-            });
-
-            if (affiliateResponse.Status != ResponseStatus.Ok || affiliateResponse.Data == null)
-            {
-                await FailRedistribution(redistribution);
-                return;
-            }
-
-            var portion = logs
-                .Where(e => e.Result == RedistributionResult.InQueue)
-                .Take(portionSize);
-            foreach (var log in portion)
-            {
-                switch (log.Storage)
+                var affiliateResponse = await _affiliateService.GetAsync(new AffiliateByIdRequest()
                 {
-                    case EntityStorage.File:
-                        await ProcessFile(log, redistribution, affiliateResponse.Data);
-                        break;
-                    case EntityStorage.Database:
-                        await ProcessRegistration(log, redistribution, affiliateResponse.Data);
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
+                    AffiliateId = redistribution.AffiliateId
+                });
+
+                if (affiliateResponse.Status != ResponseStatus.Ok || affiliateResponse.Data == null)
+                {
+                    await FailRedistribution(redistribution);
+                    return;
                 }
+
+                var portion = logs
+                    .Where(e => e.Result == RedistributionResult.InQueue)
+                    .Take(portionSize);
+                foreach (var log in portion)
+                {
+                    switch (log.Storage)
+                    {
+                        case EntityStorage.File:
+                            await ProcessFile(log, redistribution, affiliateResponse.Data);
+                            break;
+                        case EntityStorage.Database:
+                            await ProcessRegistration(log, redistribution, affiliateResponse.Data);
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
             }
         }
 
@@ -201,7 +208,8 @@ namespace MarketingBox.Redistribution.Service.Jobs
                     
                     if (redistributionEntity.UseAutologin)
                     {
-                        if (string.IsNullOrWhiteSpace(registrationResponse.Data.CustomerLoginUrl))
+                        if (registrationResponse.Data == null ||
+                            string.IsNullOrWhiteSpace(registrationResponse.Data.CustomerLoginUrl))
                         {
                             _logger.LogError("Cannot autologin. " +
                                              $"RedistributionId = {redistributionEntity.Id}. LogId = {log.Id}. " +
@@ -269,7 +277,9 @@ namespace MarketingBox.Redistribution.Service.Jobs
         private async Task ProcessFile(RedistributionLog log, RedistributionEntity redistribution,
             Affiliate.Service.Domain.Models.Affiliates.Affiliate affiliate)
         {
-            var registrations = await _fileStorage
+            try
+            {
+                var registrations = await _fileStorage
                 .ParseFile(FileEntityUniqGenerator.GetFileId(log.EntityId));
 
             if (registrations == null || !registrations.Any())
@@ -322,7 +332,8 @@ namespace MarketingBox.Redistribution.Service.Jobs
             
             if (redistribution.UseAutologin)
             {
-                if (string.IsNullOrWhiteSpace(registrationResponse.Data.CustomerLoginUrl))
+                if (registrationResponse.Data == null ||
+                    string.IsNullOrWhiteSpace(registrationResponse.Data.CustomerLoginUrl))
                 {
                     _logger.LogError("Cannot autologin. " +
                                      $"RedistributionId = {redistribution.Id}. LogId = {log.Id}. " +
@@ -356,6 +367,12 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 SuccessLog(log, 
                     JsonConvert.SerializeObject(registrationResponse), 
                     null);
+            }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                FailLog(log, JsonConvert.SerializeObject(ex));
             }
         }
 
