@@ -51,7 +51,8 @@ namespace MarketingBox.Redistribution.Service.Services
                         DateFrom = request.RegistrationSearchRequest.DateFrom,
                         DateTo = request.RegistrationSearchRequest.DateTo
                     });
-                    if (response.Status == ResponseStatus.Ok)
+                    if (response.Status == ResponseStatus.Ok &&
+                        response.Data != null && response.Data.Any())
                         regIds.AddRange(response.Data.Select(e => e.RegistrationId));
                 }
 
