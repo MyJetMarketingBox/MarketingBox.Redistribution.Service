@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using MarketingBox.Affiliate.Service.Grpc;
+using MarketingBox.Affiliate.Service.Grpc.Requests;
 using MarketingBox.Affiliate.Service.Grpc.Requests.Affiliates;
 using MarketingBox.Redistribution.Service.Domain.Models;
 using MarketingBox.Redistribution.Service.Logic;
@@ -14,6 +15,8 @@ using MarketingBox.Registration.Service.Grpc;
 using MarketingBox.Registration.Service.Grpc.Requests.Registration;
 using MarketingBox.Reporting.Service.Grpc.Requests.Registrations;
 using MarketingBox.Sdk.Common.Enums;
+using MarketingBox.Sdk.Common.Exceptions;
+using MarketingBox.Sdk.Common.Extensions;
 using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service.Tools;
@@ -30,6 +33,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
         private readonly IRegistrationService _registrationService;
         private readonly Reporting.Service.Grpc.IRegistrationService _reportingService;
         private readonly IAffiliateService _affiliateService;
+        private ICountryService _countryService;
 
         private static bool _activeProcessing;
 
@@ -38,7 +42,8 @@ namespace MarketingBox.Redistribution.Service.Jobs
             FileStorage fileStorage,
             IRegistrationService registrationService,
             Reporting.Service.Grpc.IRegistrationService reportingService,
-            IAffiliateService affiliateService)
+            IAffiliateService affiliateService, 
+            ICountryService countryService)
         {
             _logger = logger;
             _redistributionStorage = redistributionStorage;
@@ -46,6 +51,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
             _registrationService = registrationService;
             _reportingService = reportingService;
             _affiliateService = affiliateService;
+            _countryService = countryService;
             _timer = new MyTaskTimer(nameof(RedistributionJob),
                 TimeSpan.FromSeconds(60),
                 logger, DoTime);
@@ -91,18 +97,19 @@ namespace MarketingBox.Redistribution.Service.Jobs
                         await ProcessRedistribution(redistribution, logs, nextPortion);
                         break;
                     case RedistributionFrequency.Hour:
-                        if (logs.All(e => e.SendDate == null) || 
+                        if (logs.All(e => e.SendDate == null) ||
                             logs.Max(e => e.SendDate) <= DateTime.UtcNow.AddHours(-1))
                             await ProcessRedistribution(redistribution, logs, nextPortion);
                         break;
                     case RedistributionFrequency.Day:
-                        if (logs.All(e => e.SendDate == null) || 
+                        if (logs.All(e => e.SendDate == null) ||
                             logs.Max(e => e.SendDate) <= DateTime.UtcNow.AddDays(-1))
                             await ProcessRedistribution(redistribution, logs, nextPortion);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+
                 await _redistributionStorage.SaveLogs(logs);
             }
         }
@@ -163,14 +170,20 @@ namespace MarketingBox.Redistribution.Service.Jobs
             {
                 var reportingResponse = await _reportingService.SearchAsync(new RegistrationSearchRequest()
                 {
-                    RegistrationId = long.Parse(log.EntityId)
+                    RegistrationIds = new List<long> {long.Parse(log.EntityId)}
                 });
 
-                if (reportingResponse.Status == ResponseStatus.Ok && reportingResponse.Data.Any())
+                try
                 {
-                    var entity = reportingResponse.Data.First();
+                    var entity = reportingResponse.Process().First();
 
-                    var registrationResponse = await _registrationService.CreateAsync(new RegistrationCreateRequest()
+                    var countries = await _countryService.SearchAsync(new SearchByNameRequest());
+                    var country = countries.Process().FirstOrDefault(x => x.Id == entity.CountryId);
+                    if (country is null)
+                    {
+                        throw new NotFoundException("Country with id", entity.CountryId);
+                    }
+                    var registrationResponse = await _registrationService.CreateAsync(new RegistrationCreateRequest
                     {
                         GeneralInfo = new RegistrationGeneralInfo()
                         {
@@ -180,7 +193,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
                             Email = entity.Email,
                             Phone = entity.Phone,
                             Ip = entity.Ip,
-                            CountryCode = entity.CountryAlfa2Code,
+                            CountryCode = country.Alfa2Code,
                             CountryCodeType = CountryCodeType.Alfa2Code
                         },
                         AuthInfo = new AffiliateAuthInfo()
@@ -205,47 +218,49 @@ namespace MarketingBox.Redistribution.Service.Jobs
                             AffCode = entity.AffCode,
                         }
                     });
-                    
+
                     if (redistributionEntity.UseAutologin)
                     {
-                        if (registrationResponse.Data == null ||
-                            string.IsNullOrWhiteSpace(registrationResponse.Data.CustomerLoginUrl))
+                        try
+                        {
+                            var result = registrationResponse.Process();
+                            var autologinResult =
+                                await AutoLoginClicker.Click(result.CustomerLoginUrl);
+                            if (autologinResult.Success)
+                            {
+                                SuccessLog(log,
+                                    JsonConvert.SerializeObject(registrationResponse),
+                                    autologinResult.StatusCode);
+                            }
+                            else
+                            {
+                                _logger.LogError("Cannot autologin. " +
+                                                 $"RedistributionId = {redistributionEntity.Id}. LogId = {log.Id}. " +
+                                                 $"AutologinError = {autologinResult.ErrorMessage}");
+                                SuccessLog(log,
+                                    JsonConvert.SerializeObject(registrationResponse) +
+                                    JsonConvert.SerializeObject(autologinResult),
+                                    null);
+                            }
+                        }
+                        catch (Exception e)
                         {
                             _logger.LogError("Cannot autologin. " +
                                              $"RedistributionId = {redistributionEntity.Id}. LogId = {log.Id}. " +
                                              $"AutologinError = CustomerLoginUrl is empty.");
-                            SuccessLog(log, 
+                            SuccessLog(log,
                                 JsonConvert.SerializeObject(registrationResponse),
-                                null);
-                            return;
-                        }
-                        var autologinResult =
-                            await AutoLoginClicker.Click(registrationResponse.Data.CustomerLoginUrl);
-
-                        if (autologinResult.Success)
-                        {
-                            SuccessLog(log, 
-                                JsonConvert.SerializeObject(registrationResponse), 
-                                autologinResult.StatusCode);
-                        }
-                        else
-                        {
-                            _logger.LogError("Cannot autologin. " +
-                                             $"RedistributionId = {redistributionEntity.Id}. LogId = {log.Id}. " +
-                                             $"AutologinError = {autologinResult.ErrorMessage}");
-                            SuccessLog(log, 
-                                JsonConvert.SerializeObject(registrationResponse) + JsonConvert.SerializeObject(autologinResult),
                                 null);
                         }
                     }
                     else
                     {
-                        SuccessLog(log, 
-                            JsonConvert.SerializeObject(registrationResponse), 
+                        SuccessLog(log,
+                            JsonConvert.SerializeObject(registrationResponse),
                             null);
                     }
                 }
-                else
+                catch (Exception e)
                 {
                     FailLog(log, "Cannot find registration.");
                 }
@@ -280,94 +295,96 @@ namespace MarketingBox.Redistribution.Service.Jobs
             try
             {
                 var registrations = await _fileStorage
-                .ParseFile(FileEntityUniqGenerator.GetFileId(log.EntityId));
+                    .ParseFile(FileEntityUniqGenerator.GetFileId(log.EntityId));
 
-            if (registrations == null || !registrations.Any())
-            {
-                FailLog(log, "File is empty.");
-                return;
-            }
-
-            var entity =
-                registrations.FirstOrDefault(e => FileEntityUniqGenerator.GenerateUniq(e) == log.EntityId);
-
-            if (entity == null)
-            {
-                FailLog(log, "Cannot find entity in file.");
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(entity.FirstName) ||
-                string.IsNullOrWhiteSpace(entity.LastName) ||
-                string.IsNullOrWhiteSpace(entity.Email) ||
-                string.IsNullOrWhiteSpace(entity.Phone) ||
-                string.IsNullOrWhiteSpace(entity.Password) ||
-                string.IsNullOrWhiteSpace(entity.Ip) ||
-                string.IsNullOrWhiteSpace(entity.CountryAlfa2Code))
-            {
-                FailLog(log, "Cannot send entity with empty fields.");
-                return;
-            }
-
-            var registrationResponse = await _registrationService.CreateAsync(new RegistrationCreateRequest()
-            {
-                GeneralInfo = new RegistrationGeneralInfo()
+                if (registrations == null || !registrations.Any())
                 {
-                    FirstName = entity.FirstName,
-                    LastName = entity.LastName,
-                    Password = entity.Password,
-                    Email = entity.Email,
-                    Phone = entity.Phone,
-                    Ip = entity.Ip,
-                    CountryCode = entity.CountryAlfa2Code,
-                    CountryCodeType = CountryCodeType.Alfa2Code
-                },
-                AuthInfo = new AffiliateAuthInfo()
-                {
-                    AffiliateId = redistribution.AffiliateId,
-                    ApiKey = affiliate.ApiKey,
-                },
-                CampaignId = redistribution.CampaignId
-            });
-            
-            if (redistribution.UseAutologin)
-            {
-                if (registrationResponse.Data == null ||
-                    string.IsNullOrWhiteSpace(registrationResponse.Data.CustomerLoginUrl))
-                {
-                    _logger.LogError("Cannot autologin. " +
-                                     $"RedistributionId = {redistribution.Id}. LogId = {log.Id}. " +
-                                     $"AutologinError = CustomerLoginUrl is empty.");
-                    SuccessLog(log, 
-                        JsonConvert.SerializeObject(registrationResponse),
-                        null);
+                    FailLog(log, "File is empty.");
                     return;
                 }
-                var autologinResult =
-                    await AutoLoginClicker.Click(registrationResponse.Data.CustomerLoginUrl);
 
-                if (autologinResult.Success)
+                var entity =
+                    registrations.FirstOrDefault(e => FileEntityUniqGenerator.GenerateUniq(e) == log.EntityId);
+
+                if (entity == null)
                 {
-                    SuccessLog(log, 
-                        JsonConvert.SerializeObject(registrationResponse), 
-                        autologinResult.StatusCode);
+                    FailLog(log, "Cannot find entity in file.");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(entity.FirstName) ||
+                    string.IsNullOrWhiteSpace(entity.LastName) ||
+                    string.IsNullOrWhiteSpace(entity.Email) ||
+                    string.IsNullOrWhiteSpace(entity.Phone) ||
+                    string.IsNullOrWhiteSpace(entity.Password) ||
+                    string.IsNullOrWhiteSpace(entity.Ip) ||
+                    string.IsNullOrWhiteSpace(entity.CountryAlfa2Code))
+                {
+                    FailLog(log, "Cannot send entity with empty fields.");
+                    return;
+                }
+
+                var registrationResponse = await _registrationService.CreateAsync(new RegistrationCreateRequest()
+                {
+                    GeneralInfo = new RegistrationGeneralInfo()
+                    {
+                        FirstName = entity.FirstName,
+                        LastName = entity.LastName,
+                        Password = entity.Password,
+                        Email = entity.Email,
+                        Phone = entity.Phone,
+                        Ip = entity.Ip,
+                        CountryCode = entity.CountryAlfa2Code,
+                        CountryCodeType = CountryCodeType.Alfa2Code
+                    },
+                    AuthInfo = new AffiliateAuthInfo()
+                    {
+                        AffiliateId = redistribution.AffiliateId,
+                        ApiKey = affiliate.ApiKey,
+                    },
+                    CampaignId = redistribution.CampaignId
+                });
+
+                if (redistribution.UseAutologin)
+                {
+                    if (registrationResponse.Data == null ||
+                        string.IsNullOrWhiteSpace(registrationResponse.Data.CustomerLoginUrl))
+                    {
+                        _logger.LogError("Cannot autologin. " +
+                                         $"RedistributionId = {redistribution.Id}. LogId = {log.Id}. " +
+                                         $"AutologinError = CustomerLoginUrl is empty.");
+                        SuccessLog(log,
+                            JsonConvert.SerializeObject(registrationResponse),
+                            null);
+                        return;
+                    }
+
+                    var autologinResult =
+                        await AutoLoginClicker.Click(registrationResponse.Data.CustomerLoginUrl);
+
+                    if (autologinResult.Success)
+                    {
+                        SuccessLog(log,
+                            JsonConvert.SerializeObject(registrationResponse),
+                            autologinResult.StatusCode);
+                    }
+                    else
+                    {
+                        _logger.LogError("Cannot autologin. " +
+                                         $"RedistributionId = {redistribution.Id}. LogId = {log.Id}. " +
+                                         $"AutologinError = {autologinResult.ErrorMessage}");
+                        SuccessLog(log,
+                            JsonConvert.SerializeObject(registrationResponse) +
+                            JsonConvert.SerializeObject(autologinResult),
+                            null);
+                    }
                 }
                 else
                 {
-                    _logger.LogError("Cannot autologin. " +
-                                     $"RedistributionId = {redistribution.Id}. LogId = {log.Id}. " +
-                                     $"AutologinError = {autologinResult.ErrorMessage}");
-                    SuccessLog(log, 
-                        JsonConvert.SerializeObject(registrationResponse) + JsonConvert.SerializeObject(autologinResult),
+                    SuccessLog(log,
+                        JsonConvert.SerializeObject(registrationResponse),
                         null);
                 }
-            }
-            else
-            {
-                SuccessLog(log, 
-                    JsonConvert.SerializeObject(registrationResponse), 
-                    null);
-            }
             }
             catch (Exception ex)
             {

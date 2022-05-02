@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MarketingBox.Reporting.Service.Client" Version="3.3.21" />
+    <PackageReference Include="MarketingBox.Reporting.Service.Client" Version="3.3.22" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.9.0" />
   </ItemGroup>
 

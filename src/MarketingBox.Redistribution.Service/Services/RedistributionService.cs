@@ -40,17 +40,7 @@ namespace MarketingBox.Redistribution.Service.Services
                 
                 if (request.RegistrationSearchRequest != null)
                 {
-                    var response = await _registrationService.SearchAsync(new RegistrationSearchRequest()
-                    {
-                        AffiliateId = request.RegistrationSearchRequest.AffiliateId,
-                        TenantId = request.RegistrationSearchRequest.TenantId,
-                        Type = request.RegistrationSearchRequest.Type,
-                        Country = request.RegistrationSearchRequest.Country,
-                        Status = request.RegistrationSearchRequest.Status,
-                        CrmStatus = request.RegistrationSearchRequest.CrmStatus,
-                        DateFrom = request.RegistrationSearchRequest.DateFrom,
-                        DateTo = request.RegistrationSearchRequest.DateTo
-                    });
+                    var response = await _registrationService.SearchAsync(request.RegistrationSearchRequest);
                     if (response.Status == ResponseStatus.Ok &&
                         response.Data != null && response.Data.Any())
                         regIds.AddRange(response.Data.Select(e => e.RegistrationId));
