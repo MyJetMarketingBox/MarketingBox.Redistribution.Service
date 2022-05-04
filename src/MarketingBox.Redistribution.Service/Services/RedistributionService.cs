@@ -51,7 +51,7 @@ namespace MarketingBox.Redistribution.Service.Services
                 });
                 if (affiliateResponse.Status != ResponseStatus.Ok ||
                     affiliateResponse.Data == null)
-                    return new Response<RedistributionEntity>()
+                    return new Response<RedistributionEntity>
                     {
                         Status = ResponseStatus.BadRequest,
                         Error = new Error()
