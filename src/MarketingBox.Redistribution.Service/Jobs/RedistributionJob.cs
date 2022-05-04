@@ -78,7 +78,16 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 var logs = await _redistributionStorage.GetLogs(redistribution.Id);
 
                 if (!logs.Any())
+                {
+                    await FailRedistribution(redistribution, "Cant process Redistribution without logs.");
                     continue;
+                }
+
+                if (logs.All(e => e.Result != RedistributionResult.InQueue))
+                {
+                    await FinishRedistribution(redistribution);
+                    continue;
+                }
 
                 var todaySent = logs.Count(e => e.SendDate?.Date == DateTime.UtcNow.Date);
 
@@ -127,7 +136,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
 
                 if (affiliateResponse.Status != ResponseStatus.Ok || affiliateResponse.Data == null)
                 {
-                    await FailRedistribution(redistribution);
+                    await FailRedistribution(redistribution, "Cannot find affiliate.");
                     return;
                 }
 
@@ -155,11 +164,17 @@ namespace MarketingBox.Redistribution.Service.Jobs
             }
         }
 
-        private async Task FailRedistribution(RedistributionEntity entity)
+        private async Task FailRedistribution(RedistributionEntity entity, string metadata)
         {
             entity.Status = RedistributionState.Error;
-            entity.Metadata = "Cannot find affiliate.";
+            entity.Metadata = metadata;
 
+            await _redistributionStorage.Save(entity);
+        }
+        
+        private async Task FinishRedistribution(RedistributionEntity entity)
+        {
+            entity.Status = RedistributionState.Finished;
             await _redistributionStorage.Save(entity);
         }
 
