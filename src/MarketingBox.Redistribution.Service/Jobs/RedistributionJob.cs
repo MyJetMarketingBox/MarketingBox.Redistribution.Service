@@ -167,16 +167,12 @@ namespace MarketingBox.Redistribution.Service.Jobs
 
         private async Task FailRedistribution(RedistributionEntity entity, string metadata)
         {
-            entity.Status = RedistributionState.Error;
-            entity.Metadata = metadata;
-
-            await _redistributionStorage.Save(entity);
+            await _redistributionStorage.UpdateState(entity.Id, RedistributionState.Error, metadata);
         }
         
         private async Task FinishRedistribution(RedistributionEntity entity)
         {
-            entity.Status = RedistributionState.Finished;
-            await _redistributionStorage.Save(entity);
+            await _redistributionStorage.UpdateState(entity.Id, RedistributionState.Finished);
         }
 
         private async Task ProcessRegistration(RedistributionLog log, RedistributionEntity redistributionEntity,

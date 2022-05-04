@@ -74,7 +74,7 @@ namespace MarketingBox.Redistribution.Service.Storage
             return registrations.Select(FileEntityUniqGenerator.GenerateUniq).ToList();
         }
 
-        public async Task<RedistributionEntity?> UpdateState(long redistributionId, RedistributionState status)
+        public async Task<RedistributionEntity?> UpdateState(long redistributionId, RedistributionState status, string metadata = "")
         {
             await using var ctx = _databaseContextFactory.Create();
             var entity = await ctx.RedistributionCollection
@@ -84,6 +84,10 @@ namespace MarketingBox.Redistribution.Service.Storage
                 return null;
             
             entity.Status = status;
+            
+            if (!string.IsNullOrEmpty(metadata))
+                entity.Metadata = metadata;
+            
             await ctx.SaveChangesAsync();
 
             return entity;
