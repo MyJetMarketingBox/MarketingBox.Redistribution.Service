@@ -8,6 +8,7 @@ using MarketingBox.Redistribution.Service.Grpc.Models;
 using MarketingBox.Redistribution.Service.Storage;
 using MarketingBox.Reporting.Service.Grpc;
 using MarketingBox.Reporting.Service.Grpc.Requests.Registrations;
+using MarketingBox.Sdk.Common.Extensions;
 using MarketingBox.Sdk.Common.Models;
 using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.Extensions.Logging;
@@ -33,6 +34,8 @@ namespace MarketingBox.Redistribution.Service.Services
         {
             try
             {
+                request.ValidateEntity();
+
                 var regIds = new List<long>();
                 
                 if (request.RegistrationsIds != null && request.RegistrationsIds.Any())
@@ -50,15 +53,15 @@ namespace MarketingBox.Redistribution.Service.Services
                 
                 var entity = new RedistributionEntity()
                 {
-                    AffiliateId = request.AffiliateId,
-                    CampaignId = request.CampaignId,
+                    AffiliateId = (long)request.AffiliateId,
+                    CampaignId = (long)request.CampaignId,
                     CreatedAt = DateTime.UtcNow,
-                    CreatedBy = request.CreatedBy,
-                    DayLimit = request.DayLimit,
+                    CreatedBy = (long)request.CreatedBy,
+                    DayLimit = (int)request.DayLimit,
                     FilesIds = request.FilesIds,
-                    Frequency = request.Frequency,
+                    Frequency = (RedistributionFrequency)request.Frequency,
                     Status = request.Status,
-                    PortionLimit = request.PortionLimit,
+                    PortionLimit = (int)request.PortionLimit,
                     RegistrationsIds = regIds,
                     UseAutologin = request.UseAutologin
                 };
@@ -71,17 +74,10 @@ namespace MarketingBox.Redistribution.Service.Services
                     Data = newEntity
                 };
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                _logger.LogError(ex, ex.Message);
-                return new Response<RedistributionEntity>
-                {
-                    Status = ResponseStatus.InternalError,
-                    Error = new Error
-                    {
-                        ErrorMessage = ex.Message
-                    }
-                };
+                _logger.LogError(e, "Error creating partner {@context}", request);
+                return e.FailedResponse<RedistributionEntity>();
             }
         }
 
