@@ -89,7 +89,8 @@ namespace MarketingBox.Redistribution.Service.Jobs
                     continue;
                 }
 
-                var todaySent = logs.Count(e => e.SendDate?.Date == DateTime.UtcNow.Date);
+                var todaySent = logs.Count(e => e.RegistrationStatus == RegistrationStatus.Registered 
+                                                 && e.SendDate?.Date == DateTime.UtcNow.Date);
 
                 if (todaySent >= redistribution.DayLimit)
                     continue;
@@ -233,6 +234,8 @@ namespace MarketingBox.Redistribution.Service.Jobs
                             AffCode = entity.AffCode,
                         }
                     });
+                    
+                    log.RegistrationStatus = registrationResponse?.Data?.Status;
 
                     if (redistributionEntity.UseAutologin)
                     {
@@ -360,9 +363,11 @@ namespace MarketingBox.Redistribution.Service.Jobs
                     CampaignId = redistribution.CampaignId
                 });
 
+                log.RegistrationStatus = registrationResponse?.Data?.Status;
+
                 if (redistribution.UseAutologin)
                 {
-                    if (registrationResponse.Data == null ||
+                    if (registrationResponse?.Data == null ||
                         string.IsNullOrWhiteSpace(registrationResponse.Data.CustomerLoginUrl))
                     {
                         _logger.LogError("Cannot autologin. " +
