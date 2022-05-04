@@ -2,16 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MarketingBox.Affiliate.Service.Grpc;
+using MarketingBox.Affiliate.Service.Grpc.Requests.Affiliates;
+using MarketingBox.Affiliate.Service.Grpc.Requests.Campaigns;
 using MarketingBox.Redistribution.Service.Domain.Models;
 using MarketingBox.Redistribution.Service.Grpc;
 using MarketingBox.Redistribution.Service.Grpc.Models;
 using MarketingBox.Redistribution.Service.Storage;
 using MarketingBox.Reporting.Service.Grpc;
-using MarketingBox.Reporting.Service.Grpc.Requests.Registrations;
 using MarketingBox.Sdk.Common.Extensions;
 using MarketingBox.Sdk.Common.Models;
 using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.Extensions.Logging;
+using IAffiliateService = MarketingBox.Affiliate.Service.Grpc.IAffiliateService;
 
 namespace MarketingBox.Redistribution.Service.Services
 {
@@ -20,14 +23,20 @@ namespace MarketingBox.Redistribution.Service.Services
         private readonly ILogger<RedistributionService> _logger;
         private readonly RedistributionStorage _redistributionStorage;
         private readonly IRegistrationService _registrationService;
+        private readonly IAffiliateService _affiliateService;
+        private readonly ICampaignService _campaignService;
 
         public RedistributionService(ILogger<RedistributionService> logger, 
             RedistributionStorage redistributionStorage, 
-            IRegistrationService registrationService)
+            IRegistrationService registrationService, 
+            IAffiliateService affiliateService, 
+            ICampaignService campaignService)
         {
             _logger = logger;
             _redistributionStorage = redistributionStorage;
             _registrationService = registrationService;
+            _affiliateService = affiliateService;
+            _campaignService = campaignService;
         }
 
         public async Task<Response<RedistributionEntity>> CreateRedistributionAsync(CreateRedistributionRequest request)
@@ -35,6 +44,37 @@ namespace MarketingBox.Redistribution.Service.Services
             try
             {
                 request.ValidateEntity();
+                
+                var affiliateResponse = await _affiliateService.GetAsync(new AffiliateByIdRequest()
+                {
+                    AffiliateId = request.AffiliateId
+                });
+                if (affiliateResponse.Status != ResponseStatus.Ok ||
+                    affiliateResponse.Data == null)
+                    return new Response<RedistributionEntity>()
+                    {
+                        Status = ResponseStatus.BadRequest,
+                        Error = new Error()
+                        {
+                            ErrorMessage = "Cant find affiliate."
+                        }
+                    };
+
+                var campaignResponse = await _campaignService.GetAsync(new CampaignByIdRequest()
+                {
+                    CampaignId = request.CampaignId
+                });
+                if (campaignResponse.Status != ResponseStatus.Ok ||
+                    campaignResponse.Data == null)
+                    return new Response<RedistributionEntity>()
+                    {
+                        Status = ResponseStatus.BadRequest,
+                        Error = new Error()
+                        {
+                            ErrorMessage = "Cant find campaign."
+                        }
+                    };
+                
 
                 var regIds = new List<long>();
                 
@@ -50,8 +90,7 @@ namespace MarketingBox.Redistribution.Service.Services
                 }
 
                 regIds = regIds.Distinct().ToList();
-
-
+                
                 if (!regIds.Any() &&
                     (request.FilesIds == null || !request.FilesIds.Any()))
                     return new Response<RedistributionEntity>()
