@@ -50,6 +50,18 @@ namespace MarketingBox.Redistribution.Service.Services
                 }
 
                 regIds = regIds.Distinct().ToList();
+
+
+                if (!regIds.Any() &&
+                    (request.FilesIds == null || !request.FilesIds.Any()))
+                    return new Response<RedistributionEntity>()
+                    {
+                        Status = ResponseStatus.BadRequest,
+                        Error = new Error()
+                        {
+                            ErrorMessage = "Cant create Redistribution without Registrations and Files."
+                        }
+                    };
                 
                 var entity = new RedistributionEntity()
                 {
