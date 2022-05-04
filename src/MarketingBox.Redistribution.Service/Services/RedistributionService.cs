@@ -114,7 +114,7 @@ namespace MarketingBox.Redistribution.Service.Services
                     Status = request.Status,
                     PortionLimit = (int)request.PortionLimit,
                     RegistrationsIds = regIds,
-                    UseAutologin = request.UseAutologin
+                    UseAutologin = (bool)request.UseAutologin
                 };
                 
                 var newEntity = await _redistributionStorage.Save(entity);
