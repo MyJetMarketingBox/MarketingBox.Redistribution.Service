@@ -33,7 +33,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
         private readonly IRegistrationService _registrationService;
         private readonly Reporting.Service.Grpc.IRegistrationService _reportingService;
         private readonly IAffiliateService _affiliateService;
-        private ICountryService _countryService;
+        private readonly ICountryService _countryService;
 
         private static bool _activeProcessing;
         private DateTime _now = DateTime.Now;
