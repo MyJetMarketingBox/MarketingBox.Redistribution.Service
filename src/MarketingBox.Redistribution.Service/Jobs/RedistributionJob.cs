@@ -36,6 +36,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
         private ICountryService _countryService;
 
         private static bool _activeProcessing;
+        private DateTime _now = DateTime.Now;
 
         public RedistributionJob(ILogger<RedistributionJob> logger,
             RedistributionStorage redistributionStorage,
@@ -72,6 +73,8 @@ namespace MarketingBox.Redistribution.Service.Jobs
         private async Task ProcessRedistribution()
         {
             var collection = await _redistributionStorage.GetActual();
+            
+            _now = DateTime.UtcNow;
 
             foreach (var redistribution in collection)
             {
@@ -90,7 +93,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 }
 
                 var todaySent = logs.Count(e => e.RegistrationStatus == RegistrationStatus.Registered 
-                                                 && e.SendDate?.Date == DateTime.UtcNow.Date);
+                                                && e.SendDate?.Date == _now.Date);
 
                 if (todaySent >= redistribution.DayLimit)
                     continue;
@@ -108,12 +111,12 @@ namespace MarketingBox.Redistribution.Service.Jobs
                         break;
                     case RedistributionFrequency.Hour:
                         if (logs.All(e => e.SendDate == null) ||
-                            logs.Max(e => e.SendDate) <= DateTime.UtcNow.AddHours(-1))
+                            logs.Max(e => e.SendDate) <= _now.AddHours(-1))
                             await ProcessRedistribution(redistribution, logs, nextPortion);
                         break;
                     case RedistributionFrequency.Day:
                         if (logs.All(e => e.SendDate == null) ||
-                            logs.Max(e => e.SendDate) <= DateTime.UtcNow.AddDays(-1))
+                            logs.Max(e => e.SendDate) <= _now.AddDays(-1))
                             await ProcessRedistribution(redistribution, logs, nextPortion);
                         break;
                     default:
@@ -286,16 +289,16 @@ namespace MarketingBox.Redistribution.Service.Jobs
             }
         }
 
-        private static void FailLog(RedistributionLog log, string metadata)
+        private void FailLog(RedistributionLog log, string metadata)
         {
-            log.SendDate = DateTime.UtcNow;
+            log.SendDate = _now;
             log.Result = RedistributionResult.Error;
             log.Metadata = metadata;
         }
 
-        private static void SuccessLog(RedistributionLog log, string metadata, int? autologinResult)
+        private void SuccessLog(RedistributionLog log, string metadata, int? autologinResult)
         {
-            log.SendDate = DateTime.UtcNow;
+            log.SendDate = _now;
             log.Result = RedistributionResult.Success;
             log.Metadata = metadata;
 
