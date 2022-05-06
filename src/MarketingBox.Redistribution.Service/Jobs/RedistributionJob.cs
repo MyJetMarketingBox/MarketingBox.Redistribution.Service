@@ -282,7 +282,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 }
                 catch (Exception e)
                 {
-                    FailLog(log, "Cannot find registration.");
+                    FailLog(log, e.Message);
                 }
             }
             catch (Exception ex)
