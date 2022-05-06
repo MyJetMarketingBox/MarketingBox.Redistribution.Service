@@ -103,6 +103,9 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 var nextPortion = canSendToday > redistribution.PortionLimit
                     ? redistribution.PortionLimit
                     : canSendToday;
+                
+                if (nextPortion == 0)
+                    continue;
 
                 switch (redistribution.Frequency)
                 {
