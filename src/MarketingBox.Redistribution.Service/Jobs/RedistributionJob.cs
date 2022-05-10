@@ -289,7 +289,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 }
                 catch (Exception e)
                 {
-                    FailLog(log, e.Message);
+                    FailLog(log, JsonConvert.SerializeObject(e));
                 }
             }
             catch (Exception ex)
