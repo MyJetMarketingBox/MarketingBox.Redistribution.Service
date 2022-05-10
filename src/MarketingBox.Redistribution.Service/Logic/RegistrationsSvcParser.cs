@@ -34,6 +34,18 @@ namespace MarketingBox.Redistribution.Service.Logic
                     Password = fields[4],
                     Ip = fields[5],
                     CountryAlfa2Code = fields[6],
+                    Sub1 = fields[7],
+                    Sub2 = fields[8],
+                    Sub3 = fields[9],
+                    Sub4 = fields[10],
+                    Sub5 = fields[11],
+                    Sub6 = fields[12],
+                    Sub7 = fields[13],
+                    Sub8 = fields[14],
+                    Sub9 = fields[15],
+                    Sub10 = fields[16],
+                    Funnel = fields[17],
+                    AffCode = fields[17],
                     FileId = fileId
                 });
             }

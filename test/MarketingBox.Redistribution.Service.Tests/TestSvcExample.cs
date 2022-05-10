@@ -26,7 +26,6 @@ namespace MarketingBox.Redistribution.Service.Tests
             
             Console.WriteLine(JsonConvert.SerializeObject(registrationsFromSvc));
             
-            
             Assert.Pass();
         }
         

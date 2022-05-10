@@ -369,7 +369,22 @@ namespace MarketingBox.Redistribution.Service.Jobs
                         AffiliateId = redistribution.AffiliateId,
                         ApiKey = affiliate.ApiKey,
                     },
-                    CampaignId = redistribution.CampaignId
+                    CampaignId = redistribution.CampaignId,
+                    AdditionalInfo = new RegistrationAdditionalInfo()
+                    {
+                        Sub1 = entity.Sub1,
+                        Sub2 = entity.Sub2,
+                        Sub3 = entity.Sub3,
+                        Sub4 = entity.Sub4,
+                        Sub5 = entity.Sub5,
+                        Sub6 = entity.Sub6,
+                        Sub7 = entity.Sub7,
+                        Sub8 = entity.Sub8,
+                        Sub9 = entity.Sub9,
+                        Sub10 = entity.Sub10,
+                        Funnel = entity.Funnel,
+                        AffCode = entity.AffCode
+                    }
                 });
 
                 log.RegistrationStatus = registrationResponse?.Data?.Status;
