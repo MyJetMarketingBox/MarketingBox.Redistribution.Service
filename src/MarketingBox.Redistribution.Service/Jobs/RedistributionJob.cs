@@ -195,7 +195,8 @@ namespace MarketingBox.Redistribution.Service.Jobs
             {
                 var reportingResponse = await _reportingService.SearchAsync(new RegistrationSearchRequest()
                 {
-                    RegistrationIds = new List<long> {long.Parse(log.EntityId)}
+                    RegistrationIds = new List<long> {long.Parse(log.EntityId)},
+                    Type = RegistrationsReportType.All
                 });
 
                 try
