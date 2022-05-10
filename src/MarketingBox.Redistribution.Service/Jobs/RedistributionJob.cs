@@ -78,55 +78,62 @@ namespace MarketingBox.Redistribution.Service.Jobs
 
             foreach (var redistribution in collection)
             {
-                var logs = await _redistributionStorage.GetLogs(redistribution.Id);
-
-                if (!logs.Any())
+                try
                 {
-                    await FailRedistribution(redistribution, "Cant process Redistribution without logs.");
-                    continue;
-                }
+                    var logs = await _redistributionStorage.GetLogs(redistribution.Id);
 
-                if (logs.All(e => e.Result != RedistributionResult.InQueue))
-                {
-                    await FinishRedistribution(redistribution);
-                    continue;
-                }
+                    if (!logs.Any())
+                    {
+                        await FailRedistribution(redistribution, "Cant process Redistribution without logs.");
+                        continue;
+                    }
 
-                var todaySent = logs.Count(e => e.RegistrationStatus == RegistrationStatus.Registered 
-                                                && e.SendDate?.Date == _now.Date);
+                    if (logs.All(e => e.Result != RedistributionResult.InQueue))
+                    {
+                        await FinishRedistribution(redistribution);
+                        continue;
+                    }
 
-                if (todaySent >= redistribution.DayLimit)
-                    continue;
+                    var todaySent = logs.Count(e => e.RegistrationStatus == RegistrationStatus.Registered
+                                                    && e.SendDate?.Date == _now.Date);
 
-                var canSendToday = redistribution.DayLimit - todaySent;
+                    if (todaySent >= redistribution.DayLimit)
+                        continue;
 
-                var nextPortion = canSendToday > redistribution.PortionLimit
-                    ? redistribution.PortionLimit
-                    : canSendToday;
-                
-                if (nextPortion == 0)
-                    continue;
+                    var canSendToday = redistribution.DayLimit - todaySent;
 
-                switch (redistribution.Frequency)
-                {
-                    case RedistributionFrequency.Minute:
-                        await ProcessRedistribution(redistribution, logs, nextPortion);
-                        break;
-                    case RedistributionFrequency.Hour:
-                        if (logs.All(e => e.SendDate == null) ||
-                            logs.Max(e => e.SendDate) <= _now.AddHours(-1))
+                    var nextPortion = canSendToday > redistribution.PortionLimit
+                        ? redistribution.PortionLimit
+                        : canSendToday;
+
+                    if (nextPortion == 0)
+                        continue;
+
+                    switch (redistribution.Frequency)
+                    {
+                        case RedistributionFrequency.Minute:
                             await ProcessRedistribution(redistribution, logs, nextPortion);
-                        break;
-                    case RedistributionFrequency.Day:
-                        if (logs.All(e => e.SendDate == null) ||
-                            logs.Max(e => e.SendDate) <= _now.AddDays(-1))
-                            await ProcessRedistribution(redistribution, logs, nextPortion);
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                            break;
+                        case RedistributionFrequency.Hour:
+                            if (logs.All(e => e.SendDate == null) ||
+                                logs.Max(e => e.SendDate) <= _now.AddHours(-1))
+                                await ProcessRedistribution(redistribution, logs, nextPortion);
+                            break;
+                        case RedistributionFrequency.Day:
+                            if (logs.All(e => e.SendDate == null) ||
+                                logs.Max(e => e.SendDate) <= _now.AddDays(-1))
+                                await ProcessRedistribution(redistribution, logs, nextPortion);
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
 
-                await _redistributionStorage.SaveLogs(logs);
+                    await _redistributionStorage.SaveLogs(logs);
+                }
+                catch (Exception ex)
+                {
+                    await FailRedistribution(redistribution, ex.Message);
+                }
             }
         }
 
