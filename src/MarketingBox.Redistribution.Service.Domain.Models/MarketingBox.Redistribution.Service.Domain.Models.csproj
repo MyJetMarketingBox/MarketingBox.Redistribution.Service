@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="MarketingBox.Sdk.Common" Version="1.0.14" />
-    <PackageReference Include="MyJetWallet.Sdk.NoSql" Version="2.1.6" />
+    <PackageReference Include="MyJetWallet.Sdk.NoSql" Version="2.2.2" />
   </ItemGroup>
 
 </Project>
