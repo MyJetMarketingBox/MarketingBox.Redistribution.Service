@@ -13,7 +13,7 @@ namespace MarketingBox.Redistribution.Service.Storage
         private readonly DatabaseContextFactory _databaseContextFactory;
         private readonly FileStorage _fileStorage;
 
-        public RedistributionStorage(DatabaseContextFactory databaseContextFactory, 
+        public RedistributionStorage(DatabaseContextFactory databaseContextFactory,
             FileStorage fileStorage)
         {
             _databaseContextFactory = databaseContextFactory;
@@ -27,17 +27,18 @@ namespace MarketingBox.Redistribution.Service.Storage
             await ctx.SaveChangesAsync();
 
             var logs = new List<RedistributionLog>();
-            
+
             if (entity.RegistrationsIds != null && entity.RegistrationsIds.Any())
                 logs.AddRange(entity.RegistrationsIds
                     .Distinct()
                     .Select(e => new RedistributionLog()
-                {
-                    RedistributionId = entity.Id,
-                    Storage = EntityStorage.Database,
-                    EntityId = e.ToString(),
-                    Result = RedistributionResult.InQueue
-                }));
+                    {
+                        RedistributionId = entity.Id,
+                        Storage = EntityStorage.Database,
+                        EntityId = e.ToString(),
+                        Result = RedistributionResult.InQueue,
+                        TenantId = entity.TenantId
+                    }));
 
             if (entity.FilesIds != null && entity.FilesIds.Any())
             {
@@ -45,36 +46,41 @@ namespace MarketingBox.Redistribution.Service.Storage
                 {
                     var entitiesIds = await GetFileEntities(fileId);
 
-                    if (!entitiesIds.Any()) 
+                    if (!entitiesIds.Any())
                         continue;
                     foreach (var element in entitiesIds.Where(element => logs.All(e => e.EntityId != element)))
                     {
                         logs.Add(new RedistributionLog
                         {
-                            RedistributionId = entity.Id, 
-                            Storage = EntityStorage.File, 
-                            EntityId = element, 
-                            Result = RedistributionResult.InQueue
+                            RedistributionId = entity.Id,
+                            Storage = EntityStorage.File,
+                            EntityId = element,
+                            Result = RedistributionResult.InQueue,
+                            TenantId = entity.TenantId,
                         });
                     }
                 }
             }
+
             await UpsertRedistributionLog(logs);
 
             return entity;
         }
 
-        private async Task<List<string> > GetFileEntities(long fileId)
+        private async Task<List<string>> GetFileEntities(long fileId)
         {
             var registrations = await _fileStorage.ParseFile(fileId);
 
             if (registrations == null || !registrations.Any())
                 return new List<string>();
-            
+
             return registrations.Select(FileEntityUniqGenerator.GenerateUniq).ToList();
         }
 
-        public async Task<RedistributionEntity?> UpdateState(long redistributionId, RedistributionState status, string metadata = "")
+        public async Task<RedistributionEntity?> UpdateState(
+            long redistributionId,
+            RedistributionState status,
+            string metadata = "")
         {
             await using var ctx = _databaseContextFactory.Create();
             var entity = await ctx.RedistributionCollection
@@ -82,18 +88,22 @@ namespace MarketingBox.Redistribution.Service.Storage
 
             if (entity == null)
                 return null;
-            
+
             entity.Status = status;
-            
+
             if (!string.IsNullOrEmpty(metadata))
                 entity.Metadata = metadata;
-            
+
             await ctx.SaveChangesAsync();
 
             return entity;
         }
 
-        public async Task<List<RedistributionEntity>> Get(long? createdBy = null, long? affiliateId = null, long? campaignId = null)
+        public async Task<List<RedistributionEntity>> Get(
+            long? createdBy = null,
+            long? affiliateId = null,
+            long? campaignId = null,
+            string? tenantId = null)
         {
             await using var ctx = _databaseContextFactory.Create();
 
@@ -105,15 +115,18 @@ namespace MarketingBox.Redistribution.Service.Storage
                 query = query.Where(e => e.AffiliateId == affiliateId.Value);
             if (campaignId.HasValue && campaignId != 0)
                 query = query.Where(e => e.CampaignId == campaignId.Value);
+            if (!string.IsNullOrEmpty(tenantId))
+                query = query.Where(e => e.TenantId.Equals(tenantId));
 
             return query.ToList();
         }
 
-        public async Task<List<RedistributionLog>> GetLogs(long redistributionId)
+        public async Task<List<RedistributionLog>> GetLogs(long redistributionId, string? tenantId)
         {
             await using var ctx = _databaseContextFactory.Create();
             return await ctx.RedistributionLogCollection
-                .Where(e => e.RedistributionId == redistributionId)
+                .Where(e => e.TenantId.Equals(tenantId) &&
+                            e.RedistributionId == redistributionId)
                 .ToListAsync();
         }
 

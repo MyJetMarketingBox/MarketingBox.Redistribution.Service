@@ -34,8 +34,6 @@ namespace MarketingBox.Redistribution.Service.Postgres
         private void SetRedistributionLogTable(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<RedistributionLog>().ToTable(RedistributionLogTableName);
-
-            modelBuilder.Entity<RedistributionLog>().Property(e => e.Id).UseIdentityColumn();
             modelBuilder.Entity<RedistributionLog>().HasKey(e => e.Id);
             
             modelBuilder.Entity<RedistributionLog>().HasIndex(e => new {e.RedistributionId, Type = e.Storage, e.EntityId}).IsUnique();
@@ -48,9 +46,7 @@ namespace MarketingBox.Redistribution.Service.Postgres
         {
             modelBuilder.Entity<RedistributionEntity>().ToTable(RedistributionTableName);
 
-            modelBuilder.Entity<RedistributionEntity>().Property(e => e.Id).UseIdentityColumn();
             modelBuilder.Entity<RedistributionEntity>().HasKey(e => e.Id);
-            
             modelBuilder.Entity<RedistributionEntity>().HasIndex(e => e.CreatedBy);
         }
 
@@ -58,7 +54,6 @@ namespace MarketingBox.Redistribution.Service.Postgres
         {
             modelBuilder.Entity<RegistrationsFile>().ToTable(RegistrationsFileTableName);
 
-            modelBuilder.Entity<RegistrationsFile>().Property(e => e.Id).UseIdentityColumn();
             modelBuilder.Entity<RegistrationsFile>().HasKey(e => e.Id);
             
             modelBuilder.Entity<RegistrationsFile>().HasIndex(e => e.CreatedBy);

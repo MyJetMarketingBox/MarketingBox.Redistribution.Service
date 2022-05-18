@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
-using MarketingBox.Affiliate.Service.Grpc;
-using MarketingBox.Affiliate.Service.Grpc.Requests;
-using MarketingBox.Affiliate.Service.Grpc.Requests.Affiliates;
+using MarketingBox.Affiliate.Service.Client.Interfaces;
+using MarketingBox.Affiliate.Service.Domain.Models.Affiliates;
 using MarketingBox.Redistribution.Service.Domain.Models;
 using MarketingBox.Redistribution.Service.Logic;
 using MarketingBox.Redistribution.Service.Storage;
@@ -17,7 +16,6 @@ using MarketingBox.Reporting.Service.Grpc.Requests.Registrations;
 using MarketingBox.Sdk.Common.Enums;
 using MarketingBox.Sdk.Common.Exceptions;
 using MarketingBox.Sdk.Common.Extensions;
-using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service.Tools;
 using Newtonsoft.Json;
@@ -32,8 +30,8 @@ namespace MarketingBox.Redistribution.Service.Jobs
         private readonly FileStorage _fileStorage;
         private readonly IRegistrationService _registrationService;
         private readonly Reporting.Service.Grpc.IRegistrationService _reportingService;
-        private readonly IAffiliateService _affiliateService;
-        private readonly ICountryService _countryService;
+        private readonly IAffiliateClient _affiliateClient;
+        private readonly ICountryClient _countryClient;
 
         private static bool _activeProcessing;
         private DateTime _now = DateTime.Now;
@@ -43,19 +41,21 @@ namespace MarketingBox.Redistribution.Service.Jobs
             FileStorage fileStorage,
             IRegistrationService registrationService,
             Reporting.Service.Grpc.IRegistrationService reportingService,
-            IAffiliateService affiliateService, 
-            ICountryService countryService)
+            IAffiliateClient affiliateClient,
+            ICountryClient countryClient)
         {
             _logger = logger;
             _redistributionStorage = redistributionStorage;
             _fileStorage = fileStorage;
             _registrationService = registrationService;
             _reportingService = reportingService;
-            _affiliateService = affiliateService;
-            _countryService = countryService;
-            _timer = new MyTaskTimer(nameof(RedistributionJob),
+            _affiliateClient = affiliateClient;
+            _countryClient = countryClient;
+            _timer = new MyTaskTimer(
+                nameof(RedistributionJob),
                 TimeSpan.FromSeconds(60),
-                logger, DoTime);
+                logger,
+                DoTime);
         }
 
         private async Task DoTime()
@@ -73,14 +73,14 @@ namespace MarketingBox.Redistribution.Service.Jobs
         private async Task ProcessRedistribution()
         {
             var collection = await _redistributionStorage.GetActual();
-            
+
             _now = DateTime.UtcNow;
 
             foreach (var redistribution in collection)
             {
                 try
                 {
-                    var logs = await _redistributionStorage.GetLogs(redistribution.Id);
+                    var logs = await _redistributionStorage.GetLogs(redistribution.Id, redistribution.TenantId);
 
                     if (!logs.Any())
                     {
@@ -137,18 +137,22 @@ namespace MarketingBox.Redistribution.Service.Jobs
             }
         }
 
-        private async Task ProcessRedistribution(RedistributionEntity redistribution,
+        private async Task ProcessRedistribution(
+            RedistributionEntity redistribution,
             IEnumerable<RedistributionLog> logs,
             int portionSize)
         {
             try
             {
-                var affiliateResponse = await _affiliateService.GetAsync(new AffiliateByIdRequest()
+                AffiliateMessage affiliate;
+                try
                 {
-                    AffiliateId = redistribution.AffiliateId
-                });
-
-                if (affiliateResponse.Status != ResponseStatus.Ok || affiliateResponse.Data == null)
+                    affiliate =
+                        await _affiliateClient.GetAffiliateByTenantAndId(
+                            redistribution.TenantId,
+                            redistribution.AffiliateId);
+                }
+                catch (NotFoundException)
                 {
                     await FailRedistribution(redistribution, "Cannot find affiliate.");
                     return;
@@ -162,10 +166,10 @@ namespace MarketingBox.Redistribution.Service.Jobs
                     switch (log.Storage)
                     {
                         case EntityStorage.File:
-                            await ProcessFile(log, redistribution, affiliateResponse.Data);
+                            await ProcessFile(log, redistribution, affiliate);
                             break;
                         case EntityStorage.Database:
-                            await ProcessRegistration(log, redistribution, affiliateResponse.Data);
+                            await ProcessRegistration(log, redistribution, affiliate);
                             break;
                         default:
                             throw new ArgumentOutOfRangeException();
@@ -182,14 +186,16 @@ namespace MarketingBox.Redistribution.Service.Jobs
         {
             await _redistributionStorage.UpdateState(entity.Id, RedistributionState.Error, metadata);
         }
-        
+
         private async Task FinishRedistribution(RedistributionEntity entity)
         {
             await _redistributionStorage.UpdateState(entity.Id, RedistributionState.Finished);
         }
 
-        private async Task ProcessRegistration(RedistributionLog log, RedistributionEntity redistributionEntity,
-            Affiliate.Service.Domain.Models.Affiliates.Affiliate affiliate)
+        private async Task ProcessRegistration(
+            RedistributionLog log,
+            RedistributionEntity redistributionEntity,
+            AffiliateMessage affiliate)
         {
             try
             {
@@ -203,12 +209,13 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 {
                     var entity = reportingResponse.Process().First();
 
-                    var countries = await _countryService.SearchAsync(new SearchByNameRequest());
-                    var country = countries.Process().FirstOrDefault(x => x.Id == entity.CountryId);
+                    var countries = await _countryClient.GetCountries();
+                    var country = countries.FirstOrDefault(x => x.Id == entity.CountryId);
                     if (country is null)
                     {
                         throw new NotFoundException("Country with id", entity.CountryId);
                     }
+
                     var registrationResponse = await _registrationService.CreateAsync(new RegistrationCreateRequest
                     {
                         GeneralInfo = new RegistrationGeneralInfo()
@@ -225,7 +232,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
                         AuthInfo = new AffiliateAuthInfo()
                         {
                             AffiliateId = redistributionEntity.AffiliateId,
-                            ApiKey = affiliate.ApiKey,
+                            ApiKey = affiliate.GeneralInfo.ApiKey,
                         },
                         CampaignId = redistributionEntity.CampaignId,
                         AdditionalInfo = new RegistrationAdditionalInfo()
@@ -244,7 +251,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
                             AffCode = entity.AffCode,
                         }
                     });
-                    
+
                     log.RegistrationStatus = registrationResponse?.Data?.Status;
 
                     if (redistributionEntity.UseAutologin)
@@ -317,8 +324,10 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 log.AutologinResult = autologinResult;
         }
 
-        private async Task ProcessFile(RedistributionLog log, RedistributionEntity redistribution,
-            Affiliate.Service.Domain.Models.Affiliates.Affiliate affiliate)
+        private async Task ProcessFile(
+            RedistributionLog log,
+            RedistributionEntity redistribution,
+            AffiliateMessage affiliate)
         {
             try
             {
@@ -368,7 +377,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
                     AuthInfo = new AffiliateAuthInfo()
                     {
                         AffiliateId = redistribution.AffiliateId,
-                        ApiKey = affiliate.ApiKey,
+                        ApiKey = affiliate.GeneralInfo.ApiKey,
                     },
                     CampaignId = redistribution.CampaignId,
                     AdditionalInfo = new RegistrationAdditionalInfo()

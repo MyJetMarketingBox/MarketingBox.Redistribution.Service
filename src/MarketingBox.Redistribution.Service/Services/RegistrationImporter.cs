@@ -33,7 +33,8 @@ namespace MarketingBox.Redistribution.Service.Services
                 {
                     CreatedAt = DateTime.UtcNow,
                     CreatedBy = request.UserId,
-                    File = request.RegistrationsFile
+                    File = request.RegistrationsFile,
+                    TenantId = request.TenantId
                 };
 
                 await _fileStorage.Save(registrationsFile);
@@ -90,7 +91,8 @@ namespace MarketingBox.Redistribution.Service.Services
             }
         }
 
-        public async Task<Response<List<RegistrationFromFile>>> GetRegistrationsFromFileAsync(GetRegistrationsFromFileRequest request)
+        public async Task<Response<List<RegistrationFromFile>>> GetRegistrationsFromFileAsync(
+            GetRegistrationsFromFileRequest request)
         {
             try
             {

@@ -7,5 +7,6 @@ namespace MarketingBox.Redistribution.Service.Grpc.Models
     {
         [DataMember(Order = 1)] public long UserId { get; set; }
         [DataMember(Order = 2)] public byte[] RegistrationsFile { get; set; }
+        [DataMember(Order = 3)] public string TenantId { get; set; }
     }
 }

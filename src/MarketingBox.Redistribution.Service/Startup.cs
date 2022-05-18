@@ -26,10 +26,12 @@ namespace MarketingBox.Redistribution.Service
             services.AddHostedService<ApplicationLifetimeManager>();
 
             services.AddMyTelemetry("SP-", Program.Settings.ZipkinUrl);
-            
+
             services.AddDatabase(PgContext.Schema,
                 Program.Settings.PostgresConnectionString,
                 o => new PgContext(o));
+
+            services.AddAutoMapper(typeof(Startup));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -54,10 +56,12 @@ namespace MarketingBox.Redistribution.Service
 
                 endpoints.MapGrpcSchemaRegistry();
 
-                endpoints.MapGet("/", async context =>
-                {
-                    await context.Response.WriteAsync("Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
-                });
+                endpoints.MapGet("/",
+                    async context =>
+                    {
+                        await context.Response.WriteAsync(
+                            "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+                    });
             });
         }
 

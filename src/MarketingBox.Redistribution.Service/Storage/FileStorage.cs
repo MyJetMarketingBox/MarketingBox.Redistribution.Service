@@ -32,11 +32,12 @@ namespace MarketingBox.Redistribution.Service.Storage
         public async Task<List<RegistrationFromFile>?> ParseFile(long fileId)
         {
             await using var ctx = _databaseContextFactory.Create();
-            var registrationsFile = await ctx.RegistrationsFileCollection.FirstOrDefaultAsync(e => e.Id == fileId);
+            var registrationsFile = await ctx.RegistrationsFileCollection.FirstOrDefaultAsync(
+                e => e.Id == fileId);
 
             if (registrationsFile == null)
                 return null;
-            
+
             return await RegistrationsSvcParser.GetRegistrationsFromFile(fileId, registrationsFile.File);
         }
     }

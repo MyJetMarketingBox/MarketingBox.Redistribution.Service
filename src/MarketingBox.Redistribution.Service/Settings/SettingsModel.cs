@@ -25,5 +25,8 @@ namespace MarketingBox.Redistribution.Service.Settings
 
         [YamlProperty("RedistributionService.AffiliateServiceUrl")]
         public string AffiliateServiceUrl { get; set; }
+
+        [YamlProperty("RedistributionService.MyNoSqlReaderHostPort")]
+        public string MyNoSqlReaderHostPort { get; set; }
     }
 }

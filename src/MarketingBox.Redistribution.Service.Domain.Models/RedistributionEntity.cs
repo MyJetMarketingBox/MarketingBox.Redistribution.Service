@@ -20,4 +20,5 @@ public class RedistributionEntity
     [DataMember(Order = 11)] public List<long>? RegistrationsIds { get; set; }
     [DataMember(Order = 12)] public List<long>? FilesIds { get; set; }
     [DataMember(Order = 13)] public string? Metadata { get; set; }
+    [DataMember(Order = 14)] public string TenantId { get; set; }
 }
