@@ -37,7 +37,7 @@ namespace MarketingBox.Redistribution.Service.Postgres
             modelBuilder.Entity<RedistributionLog>().HasKey(e => e.Id);
             
             modelBuilder.Entity<RedistributionLog>().HasIndex(e => new {e.RedistributionId, Type = e.Storage, e.EntityId}).IsUnique();
-            modelBuilder.Entity<RedistributionLog>().HasIndex(e => e.RedistributionId);
+            modelBuilder.Entity<RedistributionLog>().HasIndex(e => new {e.TenantId,e.RedistributionId});
             modelBuilder.Entity<RedistributionLog>().HasIndex(e => e.SendDate);
             modelBuilder.Entity<RedistributionLog>().HasIndex(e => e.Result);
         }
@@ -48,6 +48,8 @@ namespace MarketingBox.Redistribution.Service.Postgres
 
             modelBuilder.Entity<RedistributionEntity>().HasKey(e => e.Id);
             modelBuilder.Entity<RedistributionEntity>().HasIndex(e => e.CreatedBy);
+            modelBuilder.Entity<RedistributionEntity>().HasIndex(e => e.TenantId);
+            modelBuilder.Entity<RedistributionEntity>().HasIndex(e => e.Status);
         }
 
         private void SetCustomStrategyTable(ModelBuilder modelBuilder)

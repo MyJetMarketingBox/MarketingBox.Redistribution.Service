@@ -189,7 +189,7 @@ namespace MarketingBox.Redistribution.Service.Jobs
 
         private async Task FinishRedistribution(RedistributionEntity entity)
         {
-            await _redistributionStorage.UpdateState(entity.Id, RedistributionState.Finished);
+            await _redistributionStorage.UpdateState(entity.Id, RedistributionState.Finished, entity.TenantId);
         }
 
         private async Task ProcessRegistration(
