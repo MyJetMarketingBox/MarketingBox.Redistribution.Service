@@ -1,8 +1,11 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MarketingBox.Redistribution.Service.Domain.Models;
+using MarketingBox.Redistribution.Service.Grpc.Models;
 using MarketingBox.Redistribution.Service.Logic;
 using MarketingBox.Redistribution.Service.Postgres;
+using MarketingBox.Sdk.Common.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketingBox.Redistribution.Service.Storage
@@ -23,22 +26,77 @@ namespace MarketingBox.Redistribution.Service.Storage
             await ctx.SaveChangesAsync();
         }
 
-        public async Task<List<RegistrationsFile>> Get()
+        public async Task<(List<RegistrationsFile>, int)> Search(GetFilesRequest request)
         {
             await using var ctx = _databaseContextFactory.Create();
-            return await ctx.RegistrationsFileCollection.ToListAsync();
+            IQueryable<RegistrationsFile> query = ctx.RegistrationsFileCollection;
+            var total = query.Count();
+
+            if (request.Asc)
+            {
+                if (request.Cursor != null)
+                {
+                    query = query.Where(x => x.Id > request.Cursor);
+                }
+
+                query = query.OrderBy(x => x.Id);
+            }
+            else
+            {
+                if (request.Cursor != null)
+                {
+                    query = query.Where(x => x.Id < request.Cursor);
+                }
+
+                query = query.OrderByDescending(x => x.Id);
+            }
+
+            if (request.Take.HasValue)
+            {
+                query = query.Take(request.Take.Value);
+            }
+
+            await query.LoadAsync();
+
+            var result = query.ToList();
+
+            return (result, total);
         }
 
-        public async Task<List<RegistrationFromFile>?> ParseFile(long fileId)
+        public async Task<(List<RegistrationFromFile>, int)> ParseFile(GetRegistrationsFromFileRequest request)
         {
             await using var ctx = _databaseContextFactory.Create();
             var registrationsFile = await ctx.RegistrationsFileCollection.FirstOrDefaultAsync(
-                e => e.Id == fileId);
+                e => e.Id == request.FileId);
 
-            if (registrationsFile == null)
-                return null;
+            if (registrationsFile is null)
+                throw new NotFoundException($"Cant find file with id {request.FileId}.");
 
-            return await RegistrationsSvcParser.GetRegistrationsFromFile(fileId, registrationsFile.File);
+            var files = await RegistrationsSvcParser.GetRegistrationsFromFile(request.FileId, registrationsFile.File);
+            var count = files.Count;
+            if (request.Asc)
+            {
+                if (request.Cursor != null)
+                {
+                    files = files.Where(x => x.Index > request.Cursor.Value).ToList();
+                }
+            }
+            else
+            {
+                if (request.Cursor != null)
+                {
+                    files = files.Where(x => x.Index < request.Cursor.Value).ToList();
+                }
+
+                files.Reverse();
+            }
+
+            if (request.Take.HasValue)
+            {
+                files = files.Take(request.Take.Value).ToList();
+            }
+
+            return (files, count);
         }
     }
 }

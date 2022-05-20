@@ -36,5 +36,7 @@ namespace MarketingBox.Redistribution.Service.Domain.Models
         [DataMember(Order = 19)] public string Funnel { get; set; }
 
         [DataMember(Order = 20)] public string AffCode { get; set; }
+        
+        [DataMember(Order = 21)] public int Index { get; set; }
     }
 }

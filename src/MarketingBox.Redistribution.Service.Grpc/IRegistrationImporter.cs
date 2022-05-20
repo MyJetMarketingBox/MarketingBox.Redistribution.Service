@@ -14,9 +14,9 @@ namespace MarketingBox.Redistribution.Service.Grpc
         Task<Response<ImportResponse>> ImportAsync(ImportRequest request);
         
         [OperationContract]
-        Task<Response<GetRegistrationFilesResponse>> GetRegistrationFilesAsync();
+        Task<Response<IReadOnlyCollection<RegistrationsFile>>> GetRegistrationFilesAsync(GetFilesRequest request);
         
         [OperationContract]
-        Task<Response<List<RegistrationFromFile>>> GetRegistrationsFromFileAsync(GetRegistrationsFromFileRequest request);
+        Task<Response<IReadOnlyCollection<RegistrationFromFile>>> GetRegistrationsFromFileAsync(GetRegistrationsFromFileRequest request);
     }
 }

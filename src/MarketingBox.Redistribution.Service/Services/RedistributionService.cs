@@ -28,7 +28,7 @@ namespace MarketingBox.Redistribution.Service.Services
         public RedistributionService(ILogger<RedistributionService> logger,
             RedistributionStorage redistributionStorage,
             IRegistrationService registrationService,
-            ICampaignService campaignService, 
+            ICampaignService campaignService,
             IAffiliateClient affiliateClient)
         {
             _logger = logger;
@@ -132,14 +132,7 @@ namespace MarketingBox.Redistribution.Service.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                return new Response<RedistributionEntity>
-                {
-                    Status = ResponseStatus.InternalError,
-                    Error = new Error
-                    {
-                        ErrorMessage = ex.Message
-                    }
-                };
+                return ex.FailedResponse<RedistributionEntity>();
             }
         }
 
@@ -148,26 +141,19 @@ namespace MarketingBox.Redistribution.Service.Services
         {
             try
             {
-                var collection = await _redistributionStorage
-                    .Get(request.CreatedBy, request.AffiliateId, request.CampaignId);
+                var (collection, total) = await _redistributionStorage.Search(request);
 
                 return new Response<List<RedistributionEntity>>
                 {
                     Status = ResponseStatus.Ok,
-                    Data = collection
+                    Data = collection,
+                    Total = total
                 };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                return new Response<List<RedistributionEntity>>
-                {
-                    Status = ResponseStatus.InternalError,
-                    Error = new Error
-                    {
-                        ErrorMessage = ex.Message
-                    }
-                };
+                return ex.FailedResponse<List<RedistributionEntity>>();
             }
         }
     }

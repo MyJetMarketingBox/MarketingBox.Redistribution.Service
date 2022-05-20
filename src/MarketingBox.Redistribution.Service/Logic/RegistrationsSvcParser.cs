@@ -6,7 +6,7 @@ using Microsoft.VisualBasic.FileIO;
 
 namespace MarketingBox.Redistribution.Service.Logic
 {
-    public class RegistrationsSvcParser
+    public static class RegistrationsSvcParser
     {
         public static async Task<List<RegistrationFromFile>> GetRegistrationsFromFile(long fileId, byte[] file)
         {
@@ -18,6 +18,7 @@ namespace MarketingBox.Redistribution.Service.Logic
             
             parser.TextFieldType = FieldType.Delimited;
             parser.SetDelimiters(",", ";", "\t");
+            int i = 0;
             while (!parser.EndOfData)
             {
                 var fields = parser.ReadFields();
@@ -45,8 +46,9 @@ namespace MarketingBox.Redistribution.Service.Logic
                     Sub9 = fields[15],
                     Sub10 = fields[16],
                     Funnel = fields[17],
-                    AffCode = fields[17],
-                    FileId = fileId
+                    AffCode = fields[18],
+                    FileId = fileId,
+                    Index = ++i
                 });
             }
             return registrationsSvc;

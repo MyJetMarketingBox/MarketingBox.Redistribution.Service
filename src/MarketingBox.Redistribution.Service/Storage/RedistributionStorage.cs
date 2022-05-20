@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MarketingBox.Redistribution.Service.Domain.Models;
+using MarketingBox.Redistribution.Service.Grpc.Models;
 using MarketingBox.Redistribution.Service.Logic;
 using MarketingBox.Redistribution.Service.Postgres;
 using Microsoft.EntityFrameworkCore;
@@ -69,9 +70,13 @@ namespace MarketingBox.Redistribution.Service.Storage
 
         private async Task<List<string>> GetFileEntities(long fileId)
         {
-            var registrations = await _fileStorage.ParseFile(fileId);
+            var (registrations,total)= await _fileStorage.ParseFile(new GetRegistrationsFromFileRequest
+            {
+                FileId = fileId,
+                Asc = true
+            });
 
-            if (registrations == null || !registrations.Any())
+            if (!registrations.Any())
                 return new List<string>();
 
             return registrations.Select(FileEntityUniqGenerator.GenerateUniq).ToList();
@@ -99,26 +104,53 @@ namespace MarketingBox.Redistribution.Service.Storage
             return entity;
         }
 
-        public async Task<List<RedistributionEntity>> Get(
-            long? createdBy = null,
-            long? affiliateId = null,
-            long? campaignId = null,
-            string? tenantId = null)
+        public async Task<(List<RedistributionEntity> result, int total)> Search(
+            GetRedistributionsRequest request)
         {
             await using var ctx = _databaseContextFactory.Create();
 
             IQueryable<RedistributionEntity> query = ctx.RedistributionCollection;
 
-            if (createdBy.HasValue && createdBy != 0)
-                query = query.Where(e => e.CreatedBy == createdBy.Value);
-            if (affiliateId.HasValue && affiliateId != 0)
-                query = query.Where(e => e.AffiliateId == affiliateId.Value);
-            if (campaignId.HasValue && campaignId != 0)
-                query = query.Where(e => e.CampaignId == campaignId.Value);
-            if (!string.IsNullOrEmpty(tenantId))
-                query = query.Where(e => e.TenantId.Equals(tenantId));
+            if (request.CreatedBy.HasValue && request.CreatedBy != 0)
+                query = query.Where(e => e.CreatedBy == request.CreatedBy.Value);
+            if (request.AffiliateId.HasValue && request.AffiliateId != 0)
+                query = query.Where(e => e.AffiliateId == request.AffiliateId.Value);
+            if (request.CampaignId.HasValue && request.CampaignId != 0)
+                query = query.Where(e => e.CampaignId == request.CampaignId.Value);
+            if (!string.IsNullOrEmpty(request.TenantId))
+                query = query.Where(e => e.TenantId.Equals(request.TenantId));
+            
+            var total = query.Count();
 
-            return query.ToList();
+            if (request.Asc)
+            {
+                if (request.Cursor != null)
+                {
+                    query = query.Where(x => x.Id > request.Cursor);
+                }
+
+                query = query.OrderBy(x => x.Id);
+            }
+            else
+            {
+                if (request.Cursor != null)
+                {
+                    query = query.Where(x => x.Id < request.Cursor);
+                }
+
+                query = query.OrderByDescending(x => x.Id);
+            }
+
+            if (request.Take.HasValue)
+            {
+                query = query.Take(request.Take.Value);
+            }
+
+            await query.LoadAsync();
+
+            var result = query.ToList();
+
+            return (result, total);
         }
 
         public async Task<List<RedistributionLog>> GetLogs(long redistributionId, string? tenantId)

@@ -5,14 +5,14 @@ using MarketingBox.Redistribution.Service.Domain.Models;
 using MarketingBox.Redistribution.Service.Grpc;
 using MarketingBox.Redistribution.Service.Grpc.Models;
 using MarketingBox.Redistribution.Service.Storage;
-using MarketingBox.Sdk.Common.Models;
+using MarketingBox.Sdk.Common.Extensions;
 using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace MarketingBox.Redistribution.Service.Services
 {
-    public class RegistrationImporter: IRegistrationImporter
+    public class RegistrationImporter : IRegistrationImporter
     {
         private readonly ILogger<RegistrationImporter> _logger;
         private readonly FileStorage _fileStorage;
@@ -27,8 +27,9 @@ namespace MarketingBox.Redistribution.Service.Services
         {
             try
             {
-                _logger.LogInformation($"RegistrationImporter.ImportAsync receive request {JsonConvert.SerializeObject(request)}");
-                
+                _logger.LogInformation(
+                    $"RegistrationImporter.ImportAsync receive request {JsonConvert.SerializeObject(request)}");
+
                 var registrationsFile = new RegistrationsFile()
                 {
                     CreatedAt = DateTime.UtcNow,
@@ -38,7 +39,7 @@ namespace MarketingBox.Redistribution.Service.Services
                 };
 
                 await _fileStorage.Save(registrationsFile);
-                
+
                 return new Response<ImportResponse>()
                 {
                     Status = ResponseStatus.Ok,
@@ -51,80 +52,49 @@ namespace MarketingBox.Redistribution.Service.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                return new Response<ImportResponse>()
-                {
-                    Status = ResponseStatus.InternalError,
-                    Error = new Error()
-                    {
-                        ErrorMessage = ex.Message
-                    }
-                };
+                return ex.FailedResponse<ImportResponse>();
             }
         }
 
-        public async Task<Response<GetRegistrationFilesResponse>> GetRegistrationFilesAsync()
+        public async Task<Response<IReadOnlyCollection<RegistrationsFile>>> GetRegistrationFilesAsync(
+            GetFilesRequest request)
         {
             try
             {
-                var files = await _fileStorage.Get();
-                
-                return new Response<GetRegistrationFilesResponse>()
+                var (files, total) = await _fileStorage.Search(request);
+
+                return new Response<IReadOnlyCollection<RegistrationsFile>>()
                 {
                     Status = ResponseStatus.Ok,
-                    Data = new GetRegistrationFilesResponse()
-                    {
-                        Files = files
-                    }
+                    Data = files,
+                    Total = total
                 };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                return new Response<GetRegistrationFilesResponse>()
-                {
-                    Status = ResponseStatus.InternalError,
-                    Error = new Error()
-                    {
-                        ErrorMessage = ex.Message
-                    }
-                };
+                return ex.FailedResponse<IReadOnlyCollection<RegistrationsFile>>();
             }
         }
 
-        public async Task<Response<List<RegistrationFromFile>>> GetRegistrationsFromFileAsync(
+        public async Task<Response<IReadOnlyCollection<RegistrationFromFile>>> GetRegistrationsFromFileAsync(
             GetRegistrationsFromFileRequest request)
         {
             try
             {
-                var registrationsFiles = await _fileStorage.ParseFile(request.FileId);
-                
-                if (registrationsFiles == null)
-                    return new Response<List<RegistrationFromFile>>()
-                    {
-                        Status = ResponseStatus.NotFound,
-                        Error = new Error()
-                        {
-                            ErrorMessage = $"Cant find file with id {request.FileId}."
-                        }
-                    };
+                var (registrationsFiles,total) = await _fileStorage.ParseFile(request);
 
-                return new Response<List<RegistrationFromFile>>()
+                return new Response<IReadOnlyCollection<RegistrationFromFile>>()
                 {
                     Status = ResponseStatus.Ok,
-                    Data = registrationsFiles
+                    Data = registrationsFiles,
+                    Total = total
                 };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                return new Response<List<RegistrationFromFile>>()
-                {
-                    Status = ResponseStatus.InternalError,
-                    Error = new Error()
-                    {
-                        ErrorMessage = ex.Message
-                    }
-                };
+                return ex.FailedResponse<IReadOnlyCollection<RegistrationFromFile>>();
             }
         }
     }

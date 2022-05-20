@@ -4,7 +4,7 @@ using MarketingBox.Sdk.Common.Attributes;
 namespace MarketingBox.Redistribution.Service.Grpc.Models;
 
 [DataContract]
-public class GetRegistrationsFromFileRequest
+public class GetFilesRequest
 {    
     [DataMember(Order = 1), AdvancedCompare(ComparisonType.GreaterThanOrEqual, 1)]
     public long? Cursor { get; set; }
@@ -13,5 +13,4 @@ public class GetRegistrationsFromFileRequest
     public int? Take { get; set; }
 
     [DataMember(Order = 3)] public bool Asc { get; set; }
-    [DataMember(Order = 4)] public long FileId { get; set; }
 }

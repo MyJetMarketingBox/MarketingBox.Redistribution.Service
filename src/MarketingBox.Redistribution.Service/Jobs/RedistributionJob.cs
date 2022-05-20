@@ -6,6 +6,7 @@ using Autofac;
 using MarketingBox.Affiliate.Service.Client.Interfaces;
 using MarketingBox.Affiliate.Service.Domain.Models.Affiliates;
 using MarketingBox.Redistribution.Service.Domain.Models;
+using MarketingBox.Redistribution.Service.Grpc.Models;
 using MarketingBox.Redistribution.Service.Logic;
 using MarketingBox.Redistribution.Service.Storage;
 using MarketingBox.Registration.Service.Domain.Models.Affiliate;
@@ -331,10 +332,15 @@ namespace MarketingBox.Redistribution.Service.Jobs
         {
             try
             {
-                var registrations = await _fileStorage
-                    .ParseFile(FileEntityUniqGenerator.GetFileId(log.EntityId));
+                var (registrations, total) = await _fileStorage
+                    .ParseFile(new GetRegistrationsFromFileRequest
+                        {
+                            FileId = FileEntityUniqGenerator.GetFileId(log.EntityId),
+                            Asc = true
+                        }
+                    );
 
-                if (registrations == null || !registrations.Any())
+                if (!registrations.Any())
                 {
                     FailLog(log, "File is empty.");
                     return;
