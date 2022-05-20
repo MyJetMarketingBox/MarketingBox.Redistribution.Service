@@ -30,8 +30,6 @@ namespace MarketingBox.Redistribution.Service
             services.AddDatabase(PgContext.Schema,
                 Program.Settings.PostgresConnectionString,
                 o => new PgContext(o));
-
-            services.AddAutoMapper(typeof(Startup));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

@@ -147,10 +147,10 @@ namespace MarketingBox.Redistribution.Service.Jobs
                 AffiliateMessage affiliate;
                 try
                 {
-                    affiliate =
-                        await _affiliateClient.GetAffiliateByTenantAndId(
+                    affiliate = await _affiliateClient.GetAffiliateById(
+                            redistribution.AffiliateId,
                             redistribution.TenantId,
-                            redistribution.AffiliateId);
+                            true);
                 }
                 catch (NotFoundException)
                 {

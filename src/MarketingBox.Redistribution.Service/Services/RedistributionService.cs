@@ -43,13 +43,12 @@ namespace MarketingBox.Redistribution.Service.Services
             try
             {
                 request.ValidateEntity();
-                
-                await _affiliateClient.GetAffiliateByTenantAndId(request.TenantId, request.AffiliateId.Value);
+
+                await _affiliateClient.GetAffiliateById(request.AffiliateId.Value, request.TenantId, true);
 
                 var campaignResponse = await _campaignService.GetAsync(new CampaignByIdRequest()
                 {
-                    CampaignId = request.CampaignId,
-                    TenantId = request.TenantId
+                    CampaignId = request.CampaignId
                 });
                 campaignResponse.Process();
 
