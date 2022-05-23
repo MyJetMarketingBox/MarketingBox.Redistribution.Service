@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MarketingBox.Affiliate.Service.Client.Interfaces;
-using MarketingBox.Affiliate.Service.Grpc;
-using MarketingBox.Affiliate.Service.Grpc.Requests.Campaigns;
+using MarketingBox.Auth.Service.Client.Interfaces;
 using MarketingBox.Redistribution.Service.Domain.Models;
 using MarketingBox.Redistribution.Service.Grpc;
 using MarketingBox.Redistribution.Service.Grpc.Models;
@@ -23,19 +22,22 @@ namespace MarketingBox.Redistribution.Service.Services
         private readonly RedistributionStorage _redistributionStorage;
         private readonly IRegistrationService _registrationService;
         private readonly IAffiliateClient _affiliateClient;
-        private readonly ICampaignService _campaignService;
+        private readonly IUserClient _userClient;
+        private readonly ICampaignClient _campaignClient;
 
         public RedistributionService(ILogger<RedistributionService> logger,
             RedistributionStorage redistributionStorage,
             IRegistrationService registrationService,
-            ICampaignService campaignService,
-            IAffiliateClient affiliateClient)
+            ICampaignClient campaignClient,
+            IAffiliateClient affiliateClient,
+            IUserClient userClient)
         {
             _logger = logger;
             _redistributionStorage = redistributionStorage;
             _registrationService = registrationService;
-            _campaignService = campaignService;
+            _campaignClient = campaignClient;
             _affiliateClient = affiliateClient;
+            _userClient = userClient;
         }
 
         public async Task<Response<RedistributionEntity>> CreateRedistributionAsync(CreateRedistributionRequest request)
@@ -44,13 +46,9 @@ namespace MarketingBox.Redistribution.Service.Services
             {
                 request.ValidateEntity();
 
-                await _affiliateClient.GetAffiliateById(request.AffiliateId.Value, request.TenantId, true);
-
-                var campaignResponse = await _campaignService.GetAsync(new CampaignByIdRequest()
-                {
-                    CampaignId = request.CampaignId
-                });
-                campaignResponse.Process();
+                var affiliateMessage = await _affiliateClient.GetAffiliateById(request.AffiliateId.Value, request.TenantId, true);
+                var createdBy = await _userClient.GetUser(request.TenantId, request.CreatedBy.Value);
+                var campaignMessage = await _campaignClient.GetCampaignById(request.CampaignId.Value, request.TenantId, true);
 
                 var regIds = new List<long>();
 
@@ -91,7 +89,10 @@ namespace MarketingBox.Redistribution.Service.Services
                     PortionLimit = (int) request.PortionLimit,
                     RegistrationsIds = regIds,
                     UseAutologin = (bool) request.UseAutologin,
-                    TenantId = request.TenantId
+                    TenantId = request.TenantId,
+                    AffiliateName = affiliateMessage.GeneralInfo.Username,
+                    CampaignName = campaignMessage.Name,
+                    CreatedByName = createdBy.Username
                 };
 
                 var newEntity = await _redistributionStorage.Save(entity);

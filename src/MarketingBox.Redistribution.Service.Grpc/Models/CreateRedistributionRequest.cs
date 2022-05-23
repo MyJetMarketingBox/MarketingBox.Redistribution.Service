@@ -19,8 +19,8 @@ public class CreateRedistributionRequest : ValidatableEntity
     [DataMember(Order = 6), Required, AdvancedCompare(ComparisonType.GreaterThan, 0)] public int? PortionLimit { get; set; }
     [DataMember(Order = 7), Required, AdvancedCompare(ComparisonType.GreaterThan, 0)] public int? DayLimit { get; set; }
     [DataMember(Order = 8), Required] public bool? UseAutologin { get; set; }
-    [DataMember(Order = 9)] public List<long>? RegistrationsIds { get; set; }
-    [DataMember(Order = 10)] public List<long>? FilesIds { get; set; }
-    [DataMember(Order = 11)] public RegistrationSearchRequest? RegistrationSearchRequest { get; set; }
+    [DataMember(Order = 9)] public List<long> RegistrationsIds { get; set; }
+    [DataMember(Order = 10)] public List<long> FilesIds { get; set; }
+    [DataMember(Order = 11)] public RegistrationSearchRequest RegistrationSearchRequest { get; set; }
     [DataMember(Order = 12)] public string TenantId { get; set; }
 }
