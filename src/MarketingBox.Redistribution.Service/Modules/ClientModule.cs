@@ -1,5 +1,6 @@
 using Autofac;
 using MarketingBox.Affiliate.Service.Client;
+using MarketingBox.Auth.Service.Client;
 using MarketingBox.Registration.Service.Client;
 using MarketingBox.Reporting.Service.Client;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,8 @@ namespace MarketingBox.Redistribution.Service.Modules
                 new LoggerFactory());
             builder.RegisterAffiliateClient(Program.Settings.AffiliateServiceUrl, noSqlClient);
             builder.RegisterCountryClient(Program.Settings.AffiliateServiceUrl, noSqlClient);
+            builder.RegisterCampaignClient(Program.Settings.AffiliateServiceUrl, noSqlClient);
+            builder.RegisterUserClient(Program.Settings.AuthServiceUrl, noSqlClient);
         }
     }
 }

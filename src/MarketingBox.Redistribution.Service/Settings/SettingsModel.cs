@@ -28,5 +28,8 @@ namespace MarketingBox.Redistribution.Service.Settings
 
         [YamlProperty("RedistributionService.MyNoSqlReaderHostPort")]
         public string MyNoSqlReaderHostPort { get; set; }
+
+        [YamlProperty("RedistributionService.AuthServiceUrl")]
+        public string AuthServiceUrl { get; set; }
     }
 }
