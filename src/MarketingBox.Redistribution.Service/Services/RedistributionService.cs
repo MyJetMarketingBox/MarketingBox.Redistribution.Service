@@ -81,7 +81,7 @@ namespace MarketingBox.Redistribution.Service.Services
                     AffiliateId = (long) request.AffiliateId,
                     CampaignId = (long) request.CampaignId,
                     CreatedAt = DateTime.UtcNow,
-                    CreatedBy = (long) request.CreatedBy,
+                    CreatedByUserId = (long) request.CreatedBy,
                     DayLimit = (int) request.DayLimit,
                     FilesIds = request.FilesIds,
                     Frequency = (RedistributionFrequency) request.Frequency,
@@ -92,7 +92,7 @@ namespace MarketingBox.Redistribution.Service.Services
                     TenantId = request.TenantId,
                     AffiliateName = affiliateMessage.GeneralInfo.Username,
                     CampaignName = campaignMessage.Name,
-                    CreatedByName = createdBy.Username
+                    CreatedByUserName = createdBy.Username
                 };
 
                 var newEntity = await _redistributionStorage.Save(entity);

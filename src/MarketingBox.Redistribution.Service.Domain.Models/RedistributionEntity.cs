@@ -8,7 +8,7 @@ namespace MarketingBox.Redistribution.Service.Domain.Models;
 public class RedistributionEntity
 {
     [DataMember(Order = 1)] public long Id { get; set; }
-    [DataMember(Order = 2)] public long CreatedBy { get; set; }
+    [DataMember(Order = 2)] public long CreatedByUserId { get; set; }
     [DataMember(Order = 3)] public DateTime CreatedAt { get; set; }
     [DataMember(Order = 4)] public long AffiliateId { get; set; }
     [DataMember(Order = 5)] public long CampaignId { get; set; }
@@ -23,5 +23,5 @@ public class RedistributionEntity
     [DataMember(Order = 14)] public string TenantId { get; set; }
     [DataMember(Order = 15)] public string AffiliateName { get; set; }
     [DataMember(Order = 16)] public string CampaignName { get; set; }
-    [DataMember(Order = 17)] public string CreatedByName { get; set; }
+    [DataMember(Order = 17)] public string CreatedByUserName { get; set; }
 }

@@ -112,7 +112,7 @@ namespace MarketingBox.Redistribution.Service.Storage
             IQueryable<RedistributionEntity> query = ctx.RedistributionCollection;
 
             if (request.CreatedBy.HasValue && request.CreatedBy != 0)
-                query = query.Where(e => e.CreatedBy == request.CreatedBy.Value);
+                query = query.Where(e => e.CreatedByUserId == request.CreatedBy.Value);
             if (request.AffiliateId.HasValue && request.AffiliateId != 0)
                 query = query.Where(e => e.AffiliateId == request.AffiliateId.Value);
             if (request.CampaignId.HasValue && request.CampaignId != 0)

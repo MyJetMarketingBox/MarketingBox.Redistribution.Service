@@ -47,7 +47,7 @@ namespace MarketingBox.Redistribution.Service.Postgres
             modelBuilder.Entity<RedistributionEntity>().ToTable(RedistributionTableName);
 
             modelBuilder.Entity<RedistributionEntity>().HasKey(e => e.Id);
-            modelBuilder.Entity<RedistributionEntity>().HasIndex(e => e.CreatedBy);
+            modelBuilder.Entity<RedistributionEntity>().HasIndex(e => e.CreatedByUserId);
             modelBuilder.Entity<RedistributionEntity>().HasIndex(e => e.TenantId);
             modelBuilder.Entity<RedistributionEntity>().HasIndex(e => e.Status);
         }
