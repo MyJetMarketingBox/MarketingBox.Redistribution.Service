@@ -47,7 +47,7 @@ namespace MarketingBox.Redistribution.Service.Services
                 request.ValidateEntity();
 
                 var affiliateMessage = await _affiliateClient.GetAffiliateById(request.AffiliateId.Value, request.TenantId, true);
-                var createdBy = await _userClient.GetUser(request.TenantId, request.CreatedBy.Value);
+                var createdBy = await _userClient.GetUser(request.CreatedBy.Value, request.TenantId, true);
                 var campaignMessage = await _campaignClient.GetCampaignById(request.CampaignId.Value, request.TenantId, true);
 
                 var regIds = new List<long>();

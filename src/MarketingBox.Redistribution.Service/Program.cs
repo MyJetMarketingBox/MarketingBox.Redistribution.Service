@@ -61,8 +61,8 @@ namespace MarketingBox.Redistribution.Service
                 .UseServiceProviderFactory(new AutofacServiceProviderFactory())
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    var httpPort = Environment.GetEnvironmentVariable("HTTP_PORT") ?? "8077";
-                    var grpcPort = Environment.GetEnvironmentVariable("GRPC_PORT") ?? "77";
+                    var httpPort = Environment.GetEnvironmentVariable("HTTP_PORT") ?? "8080";
+                    var grpcPort = Environment.GetEnvironmentVariable("GRPC_PORT") ?? "80";
 
                     Console.WriteLine($"HTTP PORT: {httpPort}");
                     Console.WriteLine($"GRPC PORT: {grpcPort}");
