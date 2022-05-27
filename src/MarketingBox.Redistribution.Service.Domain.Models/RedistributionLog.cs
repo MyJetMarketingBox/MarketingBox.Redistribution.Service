@@ -16,7 +16,7 @@ public class RedistributionLog
     [DataMember(Order = 7)] public RegistrationStatus? RegistrationStatus { get; set; }
     [DataMember(Order = 8)] public string? Metadata { get; set; }
     [DataMember(Order = 9)] public int? AutologinResult { get; set; }
-    public string TenantId { get; set; }
+    [IgnoreDataMember] public string TenantId { get; set; }
 }
 
 public enum RedistributionResult
