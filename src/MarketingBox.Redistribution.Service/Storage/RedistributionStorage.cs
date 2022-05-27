@@ -119,6 +119,8 @@ namespace MarketingBox.Redistribution.Service.Storage
                 query = query.Where(e => e.CampaignId == request.CampaignId.Value);
             if (!string.IsNullOrEmpty(request.TenantId))
                 query = query.Where(e => e.TenantId.Equals(request.TenantId));
+            if (!string.IsNullOrEmpty(request.Name))
+                query = query.Where(e => e.RedistributionName.ToLower().Contains(request.Name.ToLowerInvariant()));
             
             var total = query.Count();
 

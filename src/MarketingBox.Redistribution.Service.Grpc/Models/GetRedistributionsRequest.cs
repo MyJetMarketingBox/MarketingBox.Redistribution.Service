@@ -17,4 +17,5 @@ public class GetRedistributionsRequest
     [DataMember(Order = 5)] public long? AffiliateId { get; set; }
     [DataMember(Order = 6)] public long? CampaignId { get; set; }
     [DataMember(Order = 7)] public string TenantId { get; set; }
+    [DataMember(Order = 8)] public string Name { get; set; }
 }

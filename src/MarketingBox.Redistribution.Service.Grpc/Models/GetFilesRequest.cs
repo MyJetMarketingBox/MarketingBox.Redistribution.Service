@@ -13,4 +13,5 @@ public class GetFilesRequest
     public int? Take { get; set; }
 
     [DataMember(Order = 3)] public bool Asc { get; set; }
+    [DataMember(Order = 4)] public string FileName { get; set; }
 }

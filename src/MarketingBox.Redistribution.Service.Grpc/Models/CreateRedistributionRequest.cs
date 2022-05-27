@@ -23,4 +23,5 @@ public class CreateRedistributionRequest : ValidatableEntity
     [DataMember(Order = 10)] public List<long> FilesIds { get; set; }
     [DataMember(Order = 11)] public RegistrationSearchRequest RegistrationSearchRequest { get; set; }
     [DataMember(Order = 12)] public string TenantId { get; set; }
+    [DataMember(Order = 13), Required] public string Name { get; set; }
 }

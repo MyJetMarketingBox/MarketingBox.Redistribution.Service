@@ -78,6 +78,7 @@ namespace MarketingBox.Redistribution.Service.Services
 
                 var entity = new RedistributionEntity()
                 {
+                    RedistributionName = request.Name,
                     AffiliateId = (long) request.AffiliateId,
                     CampaignId = (long) request.CampaignId,
                     CreatedAt = DateTime.UtcNow,

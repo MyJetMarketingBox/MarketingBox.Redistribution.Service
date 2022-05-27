@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using MarketingBox.Redistribution.Service.Domain.Models;
 using MarketingBox.Redistribution.Service.Grpc;
@@ -28,11 +29,12 @@ namespace MarketingBox.Redistribution.Service.Services
             try
             {
                 _logger.LogInformation(
-                    $"RegistrationImporter.ImportAsync receive request {JsonConvert.SerializeObject(request)}");
-
+                    "RegistrationImporter.ImportAsync receive request {@Request}",request);
+                
                 var registrationsFile = new RegistrationsFile()
                 {
                     CreatedAt = DateTime.UtcNow,
+                    FileName = request.FileName,
                     CreatedBy = request.UserId,
                     File = request.RegistrationsFile,
                     TenantId = request.TenantId

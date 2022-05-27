@@ -30,7 +30,14 @@ namespace MarketingBox.Redistribution.Service.Storage
         {
             await using var ctx = _databaseContextFactory.Create();
             IQueryable<RegistrationsFile> query = ctx.RegistrationsFileCollection;
+
+            if (!string.IsNullOrEmpty(request.FileName))
+            {
+                query = query.Where(x => x.FileName.ToLower().Contains(request.FileName.ToLowerInvariant()));
+            }
+
             var total = query.Count();
+
 
             if (request.Asc)
             {

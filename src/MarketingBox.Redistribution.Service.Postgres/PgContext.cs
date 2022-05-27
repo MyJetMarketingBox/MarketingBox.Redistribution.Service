@@ -50,6 +50,7 @@ namespace MarketingBox.Redistribution.Service.Postgres
             modelBuilder.Entity<RedistributionEntity>().HasIndex(e => e.CreatedByUserId);
             modelBuilder.Entity<RedistributionEntity>().HasIndex(e => e.TenantId);
             modelBuilder.Entity<RedistributionEntity>().HasIndex(e => e.Status);
+            modelBuilder.Entity<RedistributionEntity>().HasIndex(e => e.RedistributionName);
         }
 
         private void SetCustomStrategyTable(ModelBuilder modelBuilder)
@@ -59,6 +60,7 @@ namespace MarketingBox.Redistribution.Service.Postgres
             modelBuilder.Entity<RegistrationsFile>().HasKey(e => e.Id);
             
             modelBuilder.Entity<RegistrationsFile>().HasIndex(e => e.CreatedBy);
+            modelBuilder.Entity<RegistrationsFile>().HasIndex(e => e.FileName);
         }
     }
 }
