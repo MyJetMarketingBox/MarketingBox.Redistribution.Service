@@ -59,7 +59,7 @@ namespace MarketingBox.Redistribution.Service.Postgres
 
             modelBuilder.Entity<RegistrationsFile>().HasKey(e => e.Id);
             
-            modelBuilder.Entity<RegistrationsFile>().HasIndex(e => e.CreatedBy);
+            modelBuilder.Entity<RegistrationsFile>().HasIndex(e => e.CreatedByUserId);
             modelBuilder.Entity<RegistrationsFile>().HasIndex(e => e.FileName);
         }
     }

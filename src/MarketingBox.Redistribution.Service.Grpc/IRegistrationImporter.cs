@@ -11,7 +11,7 @@ namespace MarketingBox.Redistribution.Service.Grpc
     public interface IRegistrationImporter
     {
         [OperationContract]
-        Task<Response<ImportResponse>> ImportAsync(ImportRequest request);
+        Task<Response<RegistrationsFile>> ImportAsync(ImportRequest request);
         
         [OperationContract]
         Task<Response<IReadOnlyCollection<RegistrationsFile>>> GetRegistrationFilesAsync(GetFilesRequest request);

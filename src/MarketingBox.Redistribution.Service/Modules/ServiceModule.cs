@@ -1,6 +1,5 @@
 ﻿using Autofac;
 using MarketingBox.Redistribution.Service.Jobs;
-using MarketingBox.Redistribution.Service.Logic;
 using MarketingBox.Redistribution.Service.Postgres;
 using MarketingBox.Redistribution.Service.Storage;
 
