@@ -2,6 +2,7 @@
 using Autofac;
 using MarketingBox.Redistribution.Service.Grpc;
 using MarketingBox.Redistribution.Service.Modules;
+using MarketingBox.Redistribution.Service.Postgres;
 using MarketingBox.Redistribution.Service.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -9,9 +10,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MyJetWallet.Sdk.GrpcSchema;
+using MyJetWallet.Sdk.Postgres;
 using MyJetWallet.Sdk.Service;
 using Prometheus;
-using Service.MarketingBox.Email.Service;
 using SimpleTrading.ServiceStatusReporterConnector;
 
 namespace MarketingBox.Redistribution.Service
@@ -25,6 +26,10 @@ namespace MarketingBox.Redistribution.Service
             services.AddHostedService<ApplicationLifetimeManager>();
 
             services.AddMyTelemetry("SP-", Program.Settings.ZipkinUrl);
+
+            services.AddDatabase(PgContext.Schema,
+                Program.Settings.PostgresConnectionString,
+                o => new PgContext(o));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -45,13 +50,16 @@ namespace MarketingBox.Redistribution.Service
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapGrpcSchema<RegistrationImporter, IRegistrationImporter>();
+                endpoints.MapGrpcSchema<RedistributionService, IRedistributionService>();
 
                 endpoints.MapGrpcSchemaRegistry();
 
-                endpoints.MapGet("/", async context =>
-                {
-                    await context.Response.WriteAsync("Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
-                });
+                endpoints.MapGet("/",
+                    async context =>
+                    {
+                        await context.Response.WriteAsync(
+                            "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+                    });
             });
         }
 

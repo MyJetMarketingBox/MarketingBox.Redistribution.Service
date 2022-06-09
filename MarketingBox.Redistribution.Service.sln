@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketingBox.Redistribution
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "05. Client", "05. Client", "{EB832FF1-4E01-40ED-BAC4-5ECF70F5C108}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketingBox.Email.Service.Tests", "test\MarketingBox.Email.Service.Tests\MarketingBox.Email.Service.Tests.csproj", "{FF868A2B-24FA-42B0-8400-95EDEE689678}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketingBox.Redistribution.Service.Tests", "test\MarketingBox.Redistribution.Service.Tests\MarketingBox.Redistribution.Service.Tests.csproj", "{FF868A2B-24FA-42B0-8400-95EDEE689678}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B4782F5A-5BF7-47AF-909D-FB579384CCA0}"
 	ProjectSection(SolutionItems) = preProject
@@ -29,6 +29,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarketingBox.Redistribution.Service.Domain", "src\MarketingBox.Redistribution.Service.Domain\MarketingBox.Redistribution.Service.Domain.csproj", "{5CFE74A4-CDBB-4E2D-9C0A-9CEF20DCB38B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarketingBox.Redistribution.Service.Postgres", "src\MarketingBox.Redistribution.Service.Postgres\MarketingBox.Redistribution.Service.Postgres.csproj", "{AC16582F-87B4-4B00-A675-D9BF95AB0D2E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -60,6 +62,10 @@ Global
 		{5CFE74A4-CDBB-4E2D-9C0A-9CEF20DCB38B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CFE74A4-CDBB-4E2D-9C0A-9CEF20DCB38B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CFE74A4-CDBB-4E2D-9C0A-9CEF20DCB38B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC16582F-87B4-4B00-A675-D9BF95AB0D2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC16582F-87B4-4B00-A675-D9BF95AB0D2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC16582F-87B4-4B00-A675-D9BF95AB0D2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC16582F-87B4-4B00-A675-D9BF95AB0D2E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -70,6 +76,7 @@ Global
 		{B64315EC-2356-4586-8A89-111D88A942B8} = {EB832FF1-4E01-40ED-BAC4-5ECF70F5C108}
 		{FF868A2B-24FA-42B0-8400-95EDEE689678} = {D11EB899-A148-4C9B-B340-B907EF71C4A2}
 		{5CFE74A4-CDBB-4E2D-9C0A-9CEF20DCB38B} = {446301A0-97F2-4921-BA0B-32B76039C73B}
+		{AC16582F-87B4-4B00-A675-D9BF95AB0D2E} = {446301A0-97F2-4921-BA0B-32B76039C73B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6BF00C9D-AD55-40F2-8FE3-E5C3559B3E26}

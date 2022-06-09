@@ -7,11 +7,12 @@ namespace MarketingBox.Redistribution.Service.Client
 {
     public static class AutofacHelper
     {
-        public static void RegisterEmailServiceClient(this ContainerBuilder builder, string grpcServiceUrl)
+        public static void RegisterRedistributionServiceClient(this ContainerBuilder builder, string grpcServiceUrl)
         {
             var factory = new ServiceClientFactory(grpcServiceUrl);
 
             builder.RegisterInstance(factory.GetRegistrationImporterService()).As<IRegistrationImporter>().SingleInstance();
+            builder.RegisterInstance(factory.GetRedistributionServiceService()).As<IRedistributionService>().SingleInstance();
         }
     }
 }

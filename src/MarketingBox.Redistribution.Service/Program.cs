@@ -9,13 +9,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
 using MySettingsReader;
-using Service.MarketingBox.Email.Service;
 
 namespace MarketingBox.Redistribution.Service
 {
     public class Program
     {
-        public const string SettingsFileName = ".marketingboxemailservice";
+        public const string SettingsFileName = ".marketingboxredistributionservice";
 
         public static SettingsModel Settings { get; private set; }
 
@@ -37,7 +36,7 @@ namespace MarketingBox.Redistribution.Service
 
             Settings = SettingsReader.GetSettings<SettingsModel>(SettingsFileName);
 
-            using var loggerFactory = LogConfigurator.ConfigureElk("MyJetWallet", Settings.SeqServiceUrl, Settings.ElkLogs);
+            using var loggerFactory = LogConfigurator.ConfigureElk_v2("MyJetWallet", Settings.SeqServiceUrl, Settings.ElkLogs);
 
             var logger = loggerFactory.CreateLogger<Program>();
 

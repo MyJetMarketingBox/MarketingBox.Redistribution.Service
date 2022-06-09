@@ -12,5 +12,6 @@ namespace MarketingBox.Redistribution.Service.Client
         }
 
         public IRegistrationImporter GetRegistrationImporterService() => CreateGrpcService<IRegistrationImporter>();
+        public IRedistributionService GetRedistributionServiceService() => CreateGrpcService<IRedistributionService>();
     }
 }
