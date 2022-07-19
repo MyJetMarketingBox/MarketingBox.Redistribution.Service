@@ -9,10 +9,11 @@ using MarketingBox.Redistribution.Service.Grpc;
 using MarketingBox.Redistribution.Service.Grpc.Models;
 using MarketingBox.Redistribution.Service.Storage;
 using MarketingBox.Reporting.Service.Grpc;
+using MarketingBox.Sdk.Common.Exceptions;
 using MarketingBox.Sdk.Common.Extensions;
-using MarketingBox.Sdk.Common.Models;
 using MarketingBox.Sdk.Common.Models.Grpc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace MarketingBox.Redistribution.Service.Services
 {
@@ -40,7 +41,8 @@ namespace MarketingBox.Redistribution.Service.Services
             _userClient = userClient;
         }
 
-        public async Task<Response<RedistributionEntity>> CreateRedistributionAsync(CreateRedistributionRequest request)
+        public async Task<Response<RedistributionEntity>> CreateRedistributionAsync(
+            CreateRedistributionRequest request)
         {
             try
             {
@@ -55,9 +57,10 @@ namespace MarketingBox.Redistribution.Service.Services
                 if (request.RegistrationsIds != null && request.RegistrationsIds.Any())
                     regIds.AddRange(request.RegistrationsIds);
 
-                if (request.RegistrationSearchRequest != null)
+                var search = request.RegistrationSearchRequest;
+                if (search != null)
                 {
-                    var response = await _registrationService.SearchAsync(request.RegistrationSearchRequest);
+                    var response = await _registrationService.SearchAsync(search);
                     if (response.Status == ResponseStatus.Ok &&
                         response.Data != null && response.Data.Any())
                         regIds.AddRange(response.Data.Select(e => e.RegistrationId));
@@ -67,14 +70,7 @@ namespace MarketingBox.Redistribution.Service.Services
 
                 if (!regIds.Any() &&
                     (request.FilesIds == null || !request.FilesIds.Any()))
-                    return new Response<RedistributionEntity>()
-                    {
-                        Status = ResponseStatus.BadRequest,
-                        Error = new Error()
-                        {
-                            ErrorMessage = "Cant create Redistribution without Registrations and Files."
-                        }
-                    };
+                    throw new BadRequestException("No registrations found");
 
                 var entity = new RedistributionEntity()
                 {
@@ -93,7 +89,8 @@ namespace MarketingBox.Redistribution.Service.Services
                     TenantId = request.TenantId,
                     AffiliateName = affiliateMessage.GeneralInfo.Username,
                     CampaignName = campaignMessage.Name,
-                    CreatedByUserName = createdBy.Username
+                    CreatedByUserName = createdBy.Username,
+                    SearchRequest = search is null ? null : JsonConvert.SerializeObject(search)
                 };
 
                 var newEntity = await _redistributionStorage.Save(entity);

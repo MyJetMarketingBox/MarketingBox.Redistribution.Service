@@ -5,6 +5,7 @@ using MarketingBox.Redistribution.Service.Domain.Models;
 using MarketingBox.Redistribution.Service.Grpc.Models;
 using MarketingBox.Redistribution.Service.Logic;
 using MarketingBox.Redistribution.Service.Postgres;
+using MarketingBox.Sdk.Common.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketingBox.Redistribution.Service.Storage
@@ -94,6 +95,11 @@ namespace MarketingBox.Redistribution.Service.Storage
             if (entity == null)
                 return null;
 
+            if (status == RedistributionState.Enable &&
+                entity.Status != RedistributionState.Disable)
+            {
+                throw new BadRequestException("Enabling redistribution is allowed only once");
+            }
             entity.Status = status;
 
             if (!string.IsNullOrEmpty(metadata))
