@@ -95,11 +95,14 @@ namespace MarketingBox.Redistribution.Service.Storage
             if (entity == null)
                 return null;
 
-            if (status == RedistributionState.Enable &&
-                entity.Status != RedistributionState.Disable)
+            switch (status)
             {
-                throw new BadRequestException("Enabling redistribution is allowed only once");
+                case RedistributionState.Enable when entity.Status != RedistributionState.Disable:
+                    throw new BadRequestException("Enabling redistribution is allowed only once");
+                case RedistributionState.Disable:
+                    throw new BadRequestException("Disabling redistribution is not allowed");
             }
+
             entity.Status = status;
 
             if (!string.IsNullOrEmpty(metadata))
